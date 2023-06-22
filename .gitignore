@@ -1,0 +1,40 @@
+# Maven target directory
+target/
+
+# IntelliJ IDEA project files
+.idea/
+out/
+datas/
+config/
+
+# Compiled class files
+*.class
+
+# Compiled source
+*.java~
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.MF
+*.iml
+
+# Logs and reports
+log/
+logs/
+*.log
+*.xml
+result.txt
+
+# Eclipse files
+.classpath
+.project
+.settings/
+
+# Operating System Files #
+.DS_Store
+Thumbs.db
