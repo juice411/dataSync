@@ -39,3 +39,6 @@ JsonToOracle.java
 # Operating System Files #
 .DS_Store
 Thumbs.db
+
+# Except pom.xml
+!pom.xml
