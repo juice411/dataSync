@@ -41,7 +41,7 @@ public class Dbmslob {
         LogmnrDll.endLogmnr(connid, 1);
         LogmnrDll.deinitLogmnr();
         //调试用
-        print2file(arr);
+        //print2file(arr);
 
 
         for (LogmnrRecord rec : arr) {
