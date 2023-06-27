@@ -18,8 +18,9 @@ public class Dbmslob {
         try (BufferedReader reader = new BufferedReader(new FileReader(ConfigUtil.getFilePath("monitor.tables.config.path")))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                tableSet.add(line.trim());
-                logger.info("被监控的表：{}", line.trim());
+                String table=line.toUpperCase().trim();
+                tableSet.add(table);
+                logger.info("被监控的表：{}", table);
             }
 
             //加载记录位置
