@@ -20,7 +20,7 @@ fi
 
 # 构建 classpath
 classpath=""
-for file in ${lib_dir}/*.jar; do
+for file in "${lib_dir}"/*.jar; do
   classpath="${classpath}:${file}"
 done
 
@@ -30,8 +30,53 @@ classpath="${classpath:1}"
 # 构建完整的 Java 命令
 java_cmd="${java_home}/bin/java ${jvm_options} -cp ${classpath} com.dtxy.sync.dm2orcl.DirectoryMonitor"
 
-# 执行 Java 命令
-${java_cmd}
+# 定义应用程序名称
+app_name="DirectoryMonitor"
 
-#最终执行nohup bin/run.sh >/dev/null 2>&1 &来后台运行该服务
+# 定义日志文件路径
+log_file="${base_dir}/logs/application.log"
 
+start() {
+  if is_running; then
+    echo "${app_name} 已经在运行中"
+  else
+    echo "正在启动 ${app_name} ..."
+    nohup ${java_cmd} >> "${log_file}" 2>&1 &
+    echo "${app_name} 启动成功"
+  fi
+}
+
+stop() {
+  if is_running; then
+    echo "正在停止 ${app_name} ..."
+    pkill -f "${app_name}"
+    echo "${app_name} 停止成功"
+  else
+    echo "${app_name} 未在运行中"
+  fi
+}
+
+is_running() {
+  pgrep -f "${app_name}" >/dev/null 2>&1
+}
+
+restart() {
+  stop
+  start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    restart
+    ;;
+  *)
+    echo "使用方式: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
