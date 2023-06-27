@@ -42,3 +42,4 @@ Thumbs.db
 
 # Except pom.xml
 !pom.xml
+!mapper.xlsx
