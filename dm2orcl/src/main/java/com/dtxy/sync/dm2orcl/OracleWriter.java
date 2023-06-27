@@ -6,6 +6,7 @@ import oracle.jdbc.pool.OracleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -59,7 +60,7 @@ public class OracleWriter {
             //获取要被同步的Oracle表
             String oracle_tab = base_info.get("oracle_tab").getAsString().trim();
             //获取达梦与Oracle映射表
-            Map<String, String> FIELD_MAPPING = FieldMapping.getFieldMapping(base_info.get("dm_sql").getAsString(), base_info.get("oracle_sql").getAsString());
+            Map<String, String> FIELD_MAPPING = FieldMapping.getFieldMapping(base_info.get("dm_field").getAsString(), base_info.get("oracle_field").getAsString());
 
             // 拼接操作语句
             String sql = null;
@@ -89,6 +90,30 @@ public class OracleWriter {
             }
 
             statement.executeUpdate();
+            statement.close();
+
+            //判断是否存在procedure项，如果存在说明要执行存储过程同步
+            if(base_info.has("procedure")){
+                // 准备调用存储过程的语句
+                String storedProc = String.format("{call %s}", base_info.get("procedure").getAsString().trim());
+                // 创建 CallableStatement 对象
+                CallableStatement cstmt = connection.prepareCall(storedProc);
+                // 设置字段值
+                int index = 1;
+                for (String jsonKey : FIELD_MAPPING.keySet()) {
+                    String field = FIELD_MAPPING.get(jsonKey);
+                    if (isValidString(field)) {//排除为空字符串和数字字段的情况
+                        String value = values.get(jsonKey.toUpperCase()).getAsString().trim();
+                        cstmt.setString(index++, value);
+                    }
+                }
+
+                // 执行存储过程
+                cstmt.execute();
+                cstmt.close();
+            }
+            //释放连接
+            connection.close();
 
             logger.debug("{}", "数据同步 Oracle 成功！");
         } catch (SQLException e) {
@@ -101,18 +126,29 @@ public class OracleWriter {
         StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ").append(oracle_tab).append(" (");
         StringBuilder placeholderBuilder = new StringBuilder("VALUES (");
         boolean isFirst = true;
-        for (String jsonKey : FIELD_MAPPING.keySet()) {
-            String field = FIELD_MAPPING.get(jsonKey);
-            if (isValidString(field)) {//排除为空字符串和数字字段的情况
-                if (!isFirst) {
-                    sqlBuilder.append(", ");
-                    placeholderBuilder.append(", ");
-                }
-                sqlBuilder.append(field);
-                placeholderBuilder.append("?");
-                isFirst = false;
-            }
+        for (String dm_field : FIELD_MAPPING.keySet()) {
+            String oracle_field = FIELD_MAPPING.get(dm_field);
+            if (isValidString(oracle_field)) {//排除为空字符串和数字字段的情况
+                if (oracle_field.contains("=")) {//是否存在函数表达式
+                    if (!isFirst) {
+                        sqlBuilder.append(", ");
+                        placeholderBuilder.append(", ");
+                    }
+                    String []tmp=oracle_field.split(",");
+                    sqlBuilder.append(tmp[0].trim());
+                    placeholderBuilder.append(tmp[1].trim()).append("(").append("?").append(")");
+                    isFirst = false;
 
+                }else {
+                    if (!isFirst) {
+                        sqlBuilder.append(", ");
+                        placeholderBuilder.append(", ");
+                    }
+                    sqlBuilder.append(oracle_field);
+                    placeholderBuilder.append("?");
+                    isFirst = false;
+                }
+            }
         }
         sqlBuilder.append(") ");
         placeholderBuilder.append(")");
@@ -124,15 +160,25 @@ public class OracleWriter {
     private static String buildUpdateSql(Map<String, String> FIELD_MAPPING, String oracle_tab, JsonObject set) {
         StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(oracle_tab).append(" SET ");
         boolean isFirst = true;
-        for (String jsonKey : FIELD_MAPPING.keySet()) {
-            if (set.has(jsonKey)) {
-                String field = FIELD_MAPPING.get(jsonKey);
-                if (isValidString(field)) {//排除为空字符串和数字字段的情况
-                    if (!isFirst) {
-                        sqlBuilder.append(", ");
+        for (String dm_field : FIELD_MAPPING.keySet()) {
+            if (set.has(dm_field)) {
+                String oracle_field = FIELD_MAPPING.get(dm_field);
+                if (isValidString(oracle_field)) {//排除为空字符串和数字字段的情况
+                    if (oracle_field.contains("=")) {
+                        if (!isFirst) {
+                            sqlBuilder.append(", ");
+                        }
+                        String []tmp=oracle_field.split(",");
+                        sqlBuilder.append(tmp[0].trim());
+                        sqlBuilder.append(oracle_field).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
+                        isFirst = false;
+                    }else {
+                        if (!isFirst) {
+                            sqlBuilder.append(", ");
+                        }
+                        sqlBuilder.append(oracle_field).append(" = ?");
+                        isFirst = false;
                     }
-                    sqlBuilder.append(field).append(" = ?");
-                    isFirst = false;
                 }
             }
         }

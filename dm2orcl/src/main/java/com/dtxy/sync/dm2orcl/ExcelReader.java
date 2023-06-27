@@ -16,9 +16,9 @@ public class ExcelReader {
     private static Map<String, JsonObject> dataMap;
 
     public static void main(String[] args) {
-        /*String filePath = "E:\\project\\dataSync\\test.xlsx";
+        String filePath = "E:\\project\\dataSync\\config\\mapper.xlsx";
 
-        getBaseInfoFromExcel(filePath);*/
+        getBaseInfoFromExcel(filePath);
     }
 
     public ExcelReader() {
@@ -45,15 +45,15 @@ public class ExcelReader {
                 JsonObject rowData = new JsonObject();
 
                 Cell keyCell = row.getCell(0); // First column as key
-                String keyValue = keyCell.getStringCellValue();
+                String keyValue = keyCell.getStringCellValue().toUpperCase().trim();//统一转为大写，因为dm过来的数据都是大写
 
                 for (Cell cell : row) {
                     int columnIndex = cell.getColumnIndex();
-                    String columnName = headerRow.getCell(columnIndex).getStringCellValue();
+                    String columnName = headerRow.getCell(columnIndex).getStringCellValue().trim();
 
                     switch (cell.getCellType()) {
                         case STRING:
-                            rowData.addProperty(columnName, cell.getStringCellValue());
+                            rowData.addProperty(columnName, cell.getStringCellValue().trim());
                             break;
                         case NUMERIC:
                             rowData.addProperty(columnName, cell.getNumericCellValue());
