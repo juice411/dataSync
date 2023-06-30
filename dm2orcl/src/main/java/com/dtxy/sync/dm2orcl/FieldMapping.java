@@ -19,11 +19,12 @@ public class FieldMapping {
     }
 
     public static Map<String, String> getFieldMapping(String dm_field, String oracle_field) {
-        if(containsSelect(dm_field)||containsSelect(oracle_field)){
+        /*if(containsSelect(dm_field)||containsSelect(oracle_field)){
             return getFieldMappingFromSelect(dm_field,oracle_field);
         }else
-            return getFieldMappingFromSimple(dm_field,oracle_field);
+            return getFieldMappingFromSimple(dm_field,oracle_field);*/
 
+        return getFieldMappingFromSimple(dm_field,oracle_field);
     }
 
     //从简单的字段列表获取

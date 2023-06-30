@@ -11,10 +11,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OracleWriter {
     private static final Logger logger = LoggerFactory.getLogger(OracleWriter.class);
+    private static final String pattern = "TIMESTAMP(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})";
     static ExcelReader excelReader;
 
     private static final OracleDataSource dataSource;
@@ -77,23 +79,25 @@ public class OracleWriter {
 
             }
 
-            logger.debug("同步Oracle的sql：{}", sql);
+            //logger.debug("同步Oracle的sql：{}", sql);
 
             Connection connection = dataSource.getConnection();
             PreparedStatement statement = connection.prepareStatement(sql);
 
             // 设置字段值并执行同步
             if (opr.equalsIgnoreCase("insert")) {
-                setParameterValues(statement, values, FIELD_MAPPING);
+                setParameterValues(statement, values, FIELD_MAPPING,sql);
             } else if (opr.equalsIgnoreCase("update")) {
-                setUpdateParameterValues(statement, values, jsonData.getAsJsonObject("set"), FIELD_MAPPING);
+                setUpdateParameterValues(statement, values, jsonData.getAsJsonObject("set"), FIELD_MAPPING,sql);
+            }else {
+                logger.debug("同步Oracle的sql：{}", sql);
             }
 
             statement.executeUpdate();
             statement.close();
 
             //判断是否存在procedure项，如果存在说明要执行存储过程同步
-            if(base_info.has("procedure")){
+            /*if(base_info.has("procedure")){
                 // 准备调用存储过程的语句
                 String storedProc = String.format("{call %s}", base_info.get("procedure").getAsString().trim());
                 // 创建 CallableStatement 对象
@@ -111,7 +115,7 @@ public class OracleWriter {
                 // 执行存储过程
                 cstmt.execute();
                 cstmt.close();
-            }
+            }*/
             //释放连接
             connection.close();
 
@@ -128,26 +132,24 @@ public class OracleWriter {
         boolean isFirst = true;
         for (String dm_field : FIELD_MAPPING.keySet()) {
             String oracle_field = FIELD_MAPPING.get(dm_field);
-            if (isValidString(oracle_field)) {//排除为空字符串和数字字段的情况
-                if (oracle_field.contains("=")) {//是否存在函数表达式
-                    if (!isFirst) {
-                        sqlBuilder.append(", ");
-                        placeholderBuilder.append(", ");
-                    }
-                    String []tmp=oracle_field.split(",");
-                    sqlBuilder.append(tmp[0].trim());
-                    placeholderBuilder.append(tmp[1].trim()).append("(").append("?").append(")");
-                    isFirst = false;
-
-                }else {
-                    if (!isFirst) {
-                        sqlBuilder.append(", ");
-                        placeholderBuilder.append(", ");
-                    }
-                    sqlBuilder.append(oracle_field);
-                    placeholderBuilder.append("?");
-                    isFirst = false;
+            if (oracle_field.contains("=")) {//是否存在函数表达式
+                if (!isFirst) {
+                    sqlBuilder.append(", ");
+                    placeholderBuilder.append(", ");
                 }
+                String []tmp=oracle_field.split("=");
+                sqlBuilder.append(tmp[0].trim());
+                placeholderBuilder.append(tmp[1].trim()).append("(").append("?").append(")");
+                isFirst = false;
+
+            }else {
+                if (!isFirst) {
+                    sqlBuilder.append(", ");
+                    placeholderBuilder.append(", ");
+                }
+                sqlBuilder.append(oracle_field);
+                placeholderBuilder.append("?");
+                isFirst = false;
             }
         }
         sqlBuilder.append(") ");
@@ -161,16 +163,17 @@ public class OracleWriter {
         StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(oracle_tab).append(" SET ");
         boolean isFirst = true;
         for (String dm_field : FIELD_MAPPING.keySet()) {
-            if (set.has(dm_field)) {
-                String oracle_field = FIELD_MAPPING.get(dm_field);
-                if (isValidString(oracle_field)) {//排除为空字符串和数字字段的情况
-                    if (oracle_field.contains("=")) {
+            //判断达梦字段是否包含了#号
+            if(dm_field.contains("#")){
+                String []tmp=dm_field.split("#");
+                if (set.has(tmp[0].toUpperCase())) {
+                    String oracle_field = FIELD_MAPPING.get(dm_field);
+                    if (oracle_field.contains("=")) {//是否存在函数表达式
                         if (!isFirst) {
                             sqlBuilder.append(", ");
                         }
-                        String []tmp=oracle_field.split(",");
-                        sqlBuilder.append(tmp[0].trim());
-                        sqlBuilder.append(oracle_field).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
+                        tmp=oracle_field.split("=");
+                        sqlBuilder.append(tmp[0].trim()).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
                         isFirst = false;
                     }else {
                         if (!isFirst) {
@@ -180,7 +183,28 @@ public class OracleWriter {
                         isFirst = false;
                     }
                 }
+
+            }else {
+                if (set.has(dm_field)) {
+                    String oracle_field = FIELD_MAPPING.get(dm_field);
+                    if (oracle_field.contains("=")) {//是否存在函数表达式
+                        if (!isFirst) {
+                            sqlBuilder.append(", ");
+                        }
+                        String []tmp=oracle_field.split("=");
+                        sqlBuilder.append(tmp[0].trim()).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
+                        isFirst = false;
+                    }else {
+                        if (!isFirst) {
+                            sqlBuilder.append(", ");
+                        }
+                        sqlBuilder.append(oracle_field).append(" = ?");
+                        isFirst = false;
+                    }
+                }
+
             }
+
         }
 
         // 添加 WHERE 子句
@@ -198,31 +222,118 @@ public class OracleWriter {
     }
 
     // 设置 PreparedStatement 对象的参数值
-    private static void setParameterValues(PreparedStatement statement, JsonObject jsonData, Map<String, String> FIELD_MAPPING) throws SQLException {
+    private static void setParameterValues(PreparedStatement statement, JsonObject jsonData, Map<String, String> FIELD_MAPPING, String sql) throws SQLException {
         // 设置字段值并执行插入
         int index = 1;
-        for (String jsonKey : FIELD_MAPPING.keySet()) {
-            String field = FIELD_MAPPING.get(jsonKey);
-            if (isValidString(field)) {//排除为空字符串和数字字段的情况
-                String value = jsonData.get(jsonKey.toUpperCase()).getAsString().trim();
-                statement.setString(index++, value);
+        for (String dm_field : FIELD_MAPPING.keySet()) {
+            String value;
+            //判断达梦字段是否包含了#号
+            if(dm_field.contains("#")){
+                String []tmp=dm_field.split("#");
+                value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
+            }else {
+                value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
             }
+
+            /*if(value.equals("NULL")){
+                statement.setObject(index++, null);
+            }else if(value.contains("TIMESTAMP")){
+                Pattern regex = Pattern.compile(pattern);
+                Matcher matcher = regex.matcher(value);
+                if (matcher.find()) {
+                    String timestamp = matcher.group(1);
+                    statement.setObject(index++, timestamp);
+                }else {
+                    statement.setObject(index++, value);
+                }
+                statement.setObject(index++, null);
+
+            }else {
+                statement.setObject(index++, value);
+            }*/
+
+            if(value.equals("NULL")){
+                value=null;
+            }else if(value.contains("TIMESTAMP")){
+                Pattern regex = Pattern.compile(pattern);
+                Matcher matcher = regex.matcher(value);
+                if (matcher.find()) {
+                    String timestamp = matcher.group(1);
+                    value=timestamp;
+                }
+
+            }
+            statement.setObject(index++, value);
+
+            // 拼接完整的 SQL 语句,主要是方便定位问题
+            if(value==null){
+                sql = sql.replaceFirst("\\?", "''");
+            }else
+                sql = sql.replaceFirst("\\?", "'" + value + "'");
+
+
         }
+
+        logger.debug("同步Oracle的sql：{}", sql);
     }
 
     // 设置 PreparedStatement 对象的参数值
-    private static void setUpdateParameterValues(PreparedStatement statement, JsonObject jsonData, JsonObject set, Map<String, String> FIELD_MAPPING) throws SQLException {
+    private static void setUpdateParameterValues(PreparedStatement statement, JsonObject jsonData, JsonObject set, Map<String, String> FIELD_MAPPING, String sql) throws SQLException {
         // 设置字段值并执行插入
         int index = 1;
-        for (String jsonKey : FIELD_MAPPING.keySet()) {
-            if (set.has(jsonKey)) {
-                String field = FIELD_MAPPING.get(jsonKey);
-                if (isValidString(field)) {//排除为空字符串和数字字段的情况
-                    String value = jsonData.get(jsonKey).getAsString();
-                    statement.setString(index++, value);
+        for (String dm_field : FIELD_MAPPING.keySet()) {
+            String value;
+            //判断达梦字段是否包含了#号
+            if(dm_field.contains("#")){
+                String []tmp=dm_field.split("#");
+                if (set.has(tmp[0].toUpperCase())) {
+                    value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
+                    if(value.equals("NULL")){
+                        value=null;
+                    }else if(value.contains("TIMESTAMP")){
+                        Pattern regex = Pattern.compile(pattern);
+                        Matcher matcher = regex.matcher(value);
+                        if (matcher.find()) {
+                            String timestamp = matcher.group(1);
+                            value=timestamp;
+                        }
+
+                    }
+
+                    statement.setObject(index++, value);
+
+                    // 拼接完整的 SQL 语句,主要是方便定位问题
+                    if(value==null){
+                        sql = sql.replaceFirst("\\?", "''");
+                    }else
+                        sql = sql.replaceFirst("\\?", "'" + value + "'");
+                }
+            }else {
+                if (set.has(dm_field.toUpperCase())) {
+                    value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
+                    if(value.equals("NULL")){
+                        value=null;
+                    }else if(value.contains("TIMESTAMP")){
+                        Pattern regex = Pattern.compile(pattern);
+                        Matcher matcher = regex.matcher(value);
+                        if (matcher.find()) {
+                            String timestamp = matcher.group(1);
+                            value=timestamp;
+                        }
+
+                    }
+                    statement.setObject(index++, value);
+
+                    // 拼接完整的 SQL 语句,主要是方便定位问题
+                    if(value==null){
+                        sql = sql.replaceFirst("\\?", "''");
+                    }else
+                        sql = sql.replaceFirst("\\?", "'" + value + "'");
                 }
             }
+
         }
+        logger.debug("同步Oracle的sql：{}", sql);
     }
 
     // 判断是否为有效的字符串（非 null、非空、非纯数字字符串）
