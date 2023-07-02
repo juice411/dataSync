@@ -6,7 +6,6 @@ import oracle.jdbc.pool.OracleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -117,7 +116,7 @@ public class OracleWriter {
             connection.close();
 
             logger.debug("{}", "数据同步 Oracle 成功！");
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("数据同步 Oracle 失败：{}", e.getMessage());
         }
     }

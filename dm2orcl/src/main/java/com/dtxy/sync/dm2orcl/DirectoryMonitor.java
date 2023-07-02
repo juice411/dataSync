@@ -54,7 +54,7 @@ public class DirectoryMonitor {
                         long currentModifiedTime = Files.getLastModifiedTime(filePath).toMillis();
 
                         // 检查时间间隔，避免重复触发
-                        if (currentModifiedTime - lastModifiedTime > 1000 * 60) {
+                        if (currentModifiedTime - lastModifiedTime > 1000 * Integer.parseInt(ConfigUtil.getProperty("monitor.frequency.sec"))) {
 
                             // 处理文件修改事件
                             if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {

@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,11 +17,11 @@ public class ExcelReader {
     public static void main(String[] args) {
         String filePath = "E:\\project\\dataSync\\config\\mapper.xlsx";
 
-        getBaseInfoFromExcel(filePath);
+        getBaseInfoFromExcel();
     }
 
     static {
-        getBaseInfoFromExcel(ConfigUtil.getFilePath("base.mapper.info.path"));
+        getBaseInfoFromExcel();
     }
 
     public static Boolean isContains(String dm_tab) {
@@ -33,8 +32,8 @@ public class ExcelReader {
         return dataMap.get(dm_tab);
     }
 
-    private static void getBaseInfoFromExcel(String filePath) {
-        try (FileInputStream fis = new FileInputStream(new File(filePath));
+    public static void getBaseInfoFromExcel() {
+        try (FileInputStream fis = new FileInputStream(new File(ConfigUtil.getFilePath("base.mapper.info.path")));
              Workbook workbook = WorkbookFactory.create(fis)) {
 
             Sheet sheet = workbook.getSheetAt(0);
@@ -65,12 +64,12 @@ public class ExcelReader {
                         // Handle other cell types if needed
                     }
                 }
-
                 dataMap.put(keyValue, rowData);
+                logger.info("被监控的表：{}", keyValue);
             }
 
             logger.debug("加载excel获取映射基础信息：{}", dataMap);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error("出错了：{}", e.getMessage());
         }
