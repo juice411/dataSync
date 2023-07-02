@@ -21,8 +21,12 @@ public class ExcelReader {
         getBaseInfoFromExcel(filePath);
     }
 
-    public ExcelReader() {
+    static {
         getBaseInfoFromExcel(ConfigUtil.getFilePath("base.mapper.info.path"));
+    }
+
+    public static Boolean isContains(String dm_tab) {
+        return dataMap.containsKey(dm_tab);
     }
 
     public static JsonObject getBaseInfo(String dm_tab) {

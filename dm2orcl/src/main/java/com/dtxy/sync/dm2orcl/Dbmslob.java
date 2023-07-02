@@ -11,19 +11,11 @@ import java.util.HashSet;
 public class Dbmslob {
     private static final Logger logger = LoggerFactory.getLogger(Dbmslob.class);
     private static KafkaProducerService kafkaProducerService = new KafkaProducerService(ConfigUtil.getProperty("kafka.bootstrap.servers"));
-    private static HashSet<String> tableSet = new HashSet<>();
 
     static {
-        // 加载文件中的字符串到 HashSet
-        try (BufferedReader reader = new BufferedReader(new FileReader(ConfigUtil.getFilePath("monitor.tables.config.path")))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String table=line.toUpperCase().trim();
-                tableSet.add(table);
-                logger.info("被监控的表：{}", table);
-            }
 
-            //加载记录位置
+        //加载记录位置
+        try {
             PositionRecorder.loadLastProcessedPosition();
         } catch (IOException e) {
             e.printStackTrace();
@@ -52,7 +44,7 @@ public class Dbmslob {
             } else {
                 //判断操作类型（1、2、3）并且是否为被同步的表
                 if (rec.getOperationCode() == 1) {
-                    if (tableSet.contains(rec.getSegOwner() + "." + rec.getTableName())) {
+                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
                         kafkaProducerService.sendMessage("logmnr", SqlRedoToJsonConverter.parseInsertSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());
@@ -62,7 +54,7 @@ public class Dbmslob {
                     }
 
                 } else if (rec.getOperationCode() == 2) {
-                    if (tableSet.contains(rec.getSegOwner() + "." + rec.getTableName())) {
+                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
                         kafkaProducerService.sendMessage("logmnr", SqlRedoToJsonConverter.parseDelSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());
@@ -72,7 +64,7 @@ public class Dbmslob {
                     }
 
                 } else if (rec.getOperationCode() == 3) {
-                    if (tableSet.contains(rec.getSegOwner() + "." + rec.getTableName())) {
+                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
                         kafkaProducerService.sendMessage("logmnr", SqlRedoToJsonConverter.parseUpdateSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());

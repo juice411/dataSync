@@ -17,13 +17,10 @@ import java.util.regex.Pattern;
 public class OracleWriter {
     private static final Logger logger = LoggerFactory.getLogger(OracleWriter.class);
     private static final String pattern = "TIMESTAMP(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})";
-    static ExcelReader excelReader;
 
     private static final OracleDataSource dataSource;
 
     static {
-        excelReader = new ExcelReader();
-
         // 创建连接池并获取连接
         dataSource = createDataSource();
         // 注册进程关闭钩子
@@ -58,7 +55,7 @@ public class OracleWriter {
             JsonObject values = jsonData.getAsJsonObject("values");
 
             //从基础映射文件获取映射基础信息表
-            JsonObject base_info = excelReader.getBaseInfo(dm_tab);
+            JsonObject base_info = ExcelReader.getBaseInfo(dm_tab);
             //获取要被同步的Oracle表
             String oracle_tab = base_info.get("oracle_tab").getAsString().trim();
             //获取达梦与Oracle映射表
