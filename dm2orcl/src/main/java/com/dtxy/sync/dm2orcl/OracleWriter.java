@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 public class OracleWriter {
     private static final Logger logger = LoggerFactory.getLogger(OracleWriter.class);
-    private static final String pattern = "TIMESTAMP(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})";
+    private static final String pattern = "TIMESTAMP(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})|DATE(\\d{4}-\\d{2}-\\d{2})";
 
     private static final OracleDataSource dataSource;
 
@@ -258,6 +258,14 @@ public class OracleWriter {
                     value=timestamp;
                 }
 
+            }else if(value.contains("DATE")){
+                Pattern regex = Pattern.compile(pattern);
+                Matcher matcher = regex.matcher(value);
+                if (matcher.find()) {
+                    String timestamp = matcher.group(2);
+                    value=timestamp += " 00:00:00";
+                }
+
             }
             statement.setObject(index++, value);
 
@@ -294,6 +302,14 @@ public class OracleWriter {
                             value=timestamp;
                         }
 
+                    }else if(value.contains("DATE")){
+                        Pattern regex = Pattern.compile(pattern);
+                        Matcher matcher = regex.matcher(value);
+                        if (matcher.find()) {
+                            String timestamp = matcher.group(2);
+                            value=timestamp += " 00:00:00";
+                        }
+
                     }
 
                     statement.setObject(index++, value);
@@ -315,6 +331,14 @@ public class OracleWriter {
                         if (matcher.find()) {
                             String timestamp = matcher.group(1);
                             value=timestamp;
+                        }
+
+                    }else if(value.contains("DATE")){
+                        Pattern regex = Pattern.compile(pattern);
+                        Matcher matcher = regex.matcher(value);
+                        if (matcher.find()) {
+                            String timestamp = matcher.group(2);
+                            value=timestamp += " 00:00:00";
                         }
 
                     }

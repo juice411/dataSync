@@ -38,7 +38,7 @@ public class FieldMapping {
 
         Map<String, String> map = new LinkedHashMap<>();
         for (int i = 0; i < keys.length; i++) {
-            map.put(keys[i], values[i]);
+            map.put(keys[i].trim(), values[i].trim());
         }
 
         return map;

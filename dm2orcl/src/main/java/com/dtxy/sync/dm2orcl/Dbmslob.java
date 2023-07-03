@@ -47,6 +47,7 @@ public class Dbmslob {
                 //判断操作类型（1、2、3）并且是否为被同步的表
                 if (rec.getOperationCode() == 1) {
                     if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
+                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
                         kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseInsertSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());
@@ -57,6 +58,7 @@ public class Dbmslob {
 
                 } else if (rec.getOperationCode() == 2) {
                     if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
+                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
                         kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseDelSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());
@@ -67,6 +69,7 @@ public class Dbmslob {
 
                 } else if (rec.getOperationCode() == 3) {
                     if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
+                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
                         kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseUpdateSqlRedoToJson(rec.getSqlRedo()));
                         /*System.out.println("=========================================");
                         System.out.println(rec.getScn());
@@ -78,9 +81,6 @@ public class Dbmslob {
                 }
 
                 //logger.info("已处理scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
-                if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
-                    logger.info("已处理scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
-                }
 
                 //记录处理位置
                 PositionRecorder.recordPosition(rec.getScn());
