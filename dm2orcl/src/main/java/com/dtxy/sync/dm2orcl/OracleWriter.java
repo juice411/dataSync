@@ -133,7 +133,7 @@ public class OracleWriter {
                     sqlBuilder.append(", ");
                     placeholderBuilder.append(", ");
                 }
-                String []tmp=oracle_field.split("=");
+                String []tmp=oracle_field.split("=",2);
                 sqlBuilder.append(tmp[0].trim());
                 placeholderBuilder.append(tmp[1].trim()).append("(").append("?").append(")");
                 isFirst = false;
@@ -225,28 +225,11 @@ public class OracleWriter {
             String value;
             //判断达梦字段是否包含了#号
             if(dm_field.contains("#")){
-                String []tmp=dm_field.split("#");
+                String []tmp=dm_field.split("#",2);
                 value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
             }else {
                 value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
             }
-
-            /*if(value.equals("NULL")){
-                statement.setObject(index++, null);
-            }else if(value.contains("TIMESTAMP")){
-                Pattern regex = Pattern.compile(pattern);
-                Matcher matcher = regex.matcher(value);
-                if (matcher.find()) {
-                    String timestamp = matcher.group(1);
-                    statement.setObject(index++, timestamp);
-                }else {
-                    statement.setObject(index++, value);
-                }
-                statement.setObject(index++, null);
-
-            }else {
-                statement.setObject(index++, value);
-            }*/
 
             if(value.equals("NULL")){
                 value=null;
@@ -289,7 +272,7 @@ public class OracleWriter {
             String value;
             //判断达梦字段是否包含了#号
             if(dm_field.contains("#")){
-                String []tmp=dm_field.split("#");
+                String []tmp=dm_field.split("#",2);
                 if (set.has(tmp[0].toUpperCase())) {
                     value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
                     if(value.equals("NULL")){
