@@ -49,12 +49,12 @@ public class SqlRedoToJsonConverter {
         jsonBuilder.append("\"values\": {");
 
         for (int i = 0; i < columns.length; i++) {
-            String column = columns[i].replaceAll("\"", "");
+            String key = columns[i].replaceAll("\"", "").trim();
             String value = values[i].replaceAll("'", ""); // Remove surrounding single quotes
             // 给内部双引号加上转义符
             value = StringEscapeUtils.escapeJava(value);
 
-            jsonBuilder.append("\"").append(column).append("\": \"").append(value).append("\"");
+            jsonBuilder.append("\"").append(key.toUpperCase()).append("\": \"").append(value).append("\"");
 
             if (i < columns.length - 1) {
                 jsonBuilder.append(",");
@@ -102,7 +102,7 @@ public class SqlRedoToJsonConverter {
             String key = entry.getKey();
             String value = entry.getValue();
 
-            jsonBuilder.append("\"").append(key).append("\": \"").append(value).append("\"");
+            jsonBuilder.append("\"").append(key.toUpperCase()).append("\": \"").append(value).append("\"");
 
             if (i < conditionMap.size() - 1) {
                 jsonBuilder.append(",");
@@ -143,7 +143,7 @@ public class SqlRedoToJsonConverter {
             // 给内部双引号加上转义符
             value = StringEscapeUtils.escapeJava(value);
 
-            jsonBuilder.append("\"").append(key).append("\": \"").append(value).append("\"");
+            jsonBuilder.append("\"").append(key.toUpperCase()).append("\": \"").append(value).append("\"");
             if (i < setPairs.length - 1) {
                 jsonBuilder.append(",");
             }
@@ -165,7 +165,7 @@ public class SqlRedoToJsonConverter {
             // 给内部双引号加上转义符
             value = StringEscapeUtils.escapeJava(value);
 
-            jsonBuilder.append("\"").append(key).append("\": \"").append(value).append("\"");
+            jsonBuilder.append("\"").append(key.toUpperCase()).append("\": \"").append(value).append("\"");
             if (i < conditions.length - 1) {
                 jsonBuilder.append(",");
             }
