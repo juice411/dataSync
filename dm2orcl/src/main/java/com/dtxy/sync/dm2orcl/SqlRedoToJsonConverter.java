@@ -1,7 +1,6 @@
 package com.dtxy.sync.dm2orcl;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -21,18 +20,18 @@ public class SqlRedoToJsonConverter {
         String json = parseDelSqlRedoToJson(sqlRedo);*/
 
         //String sqlRedo = "UPDATE \"RL_FUEL_RLDD\".\"RL_CKC_KDKKSP\" SET \"JSRQ\" = '2019-10-23' WHERE \"ID\" = 'af734cd4-6068-4341-8f4d-3946a6a7d2ce' AND \"JSDID\" = 'b368e8b4-7b70-4517-bb83-865d3c309139' AND \"JSDBH\" = 'CDT-JS-HN-AYFD-1910-026-C' AND \"JSLX\" = '3' AND \"JSYJ\" = '2' AND \"HTBZSL\" = '1.0' AND \"HTBZZL\" = '70' AND \"YSPJEHJ\" = '0' AND \"STATUS\" = '1' AND \"KFCSYF\" = '8912926' AND \"QYCSYF\" = '8912926' AND \"REMARK\" IS NULL AND \"DSFSL\" = '23339.27' AND \"DSFZL\" = '4019' AND \"HTKJ\" = '0.09502' AND \"KFKJ\" = '0.09502' AND \"HTKK\" = '0' AND \"HTKD\" = '0' AND \"HTHJSP\" = '0' AND \"JSHTJJE\" = '0' AND \"BZSPSH\" IS NULL AND \"BZSPLY\" IS NULL AND \"HTBH\" IS NULL AND \"JSRQ\" IS NULL AND \"XFDWNAME\" IS NULL AND \"SKDWMC\" IS NULL AND \"GHSL\" IS NULL AND \"JSSL\" IS NULL AND \"YSRZ\" IS NULL AND \"JSRZ\" IS NULL AND \"JSMJ\" IS NULL AND \"HJDJ\" IS NULL AND \"DCBMDJ\" IS NULL AND \"YSFS\" IS NULL AND \"PROC_INST_ID\" IS NULL AND \"FZGS_QR\" = '1' AND \"FZGS_QRSJ\" = DATE'2019-10-30' AND \"FZGS_QRR\" = '18638269787' AND \"CLFJ\" IS NULL AND \"SHFJ\" IS NULL AND \"FZGSSHYJ\" IS NULL AND \"CREATEUSER\" = '15936822190' AND \"CREATETIME\" = DATE'2019-10-28' AND \"UPDATEUSER\" = '15936822190' AND \"UPDATETIME\" = DATE'2019-10-28' AND \"CREATOR_NAME\" IS NULL AND \"MODIFY_NAME\" IS NULL AND \"POWER_ORGID\" IS NULL AND \"FZGS_ORGID\" IS NULL AND \"HANDLE_STATUS\" = '3' AND \"SKDWID\" IS NULL AND \"MINE_NAME\" IS NULL AND \"SKDWTYPE\" IS NULL AND \"HTSX\" IS NULL AND \"CFZL\" IS NULL AND \"JSZL\" IS NULL AND \"BJ_REASON\" IS NULL AND \"AUDIT_STATUS\" IS NULL";
-        String sqlRedo = "UPDATE \"RL_FUEL_RLDD\".\"RL_CONTRACT\" SET \"CONTRACT_TYPE\" = '30', \"CONTRACT_TAB\" = '30', \"FIRST_PARTY_ID\" = '8ad184247ee84d1b017ee866f70a0167', \"SECOND_PARTY_ID\" = '40288a81513e22bd01513e7427d70245', \"BILL_NO\" = 'CDT-DTNMGDLMHGYXZRGS-2307-0001-CZ-L', \"VERSION_NO\" = '001', \"NAME\" = '测试杂费合同_yd2', \"SIGN_PLACE\" = '长沙', \"SIGN_DATE\" = DATE'2023-07-03', \"START_DATE\" = DATE'2023-07-03', \"END_DATE\" = DATE'2023-11-30', \"AUDIT_STATE\" = '0', \"ORGAN_ID\" = '8ad184247ee84d1b017ee866f70a0167', \"DATA_STATE\" = 10, \"LAST_UPDATE_DATE\" = TIMESTAMP'2023-07-03 10:38:16', \"LAST_UPDATED_BY\" = 'cdlm', \"CREATED_BY\" = 'cdlm', \"CONTRACT_CATEGORY\" = '10', \"BUY_MODE\" = '20', \"WEIGHT_ACCORDING\" = '30', \"BILLING_MODE\" = '1', \"COUNTERSIGNED_CONTENT\" = '会签单主要内容文本域', \"PROFIT_EVALUATION\" = '利润测算文本域', \"MANAGE_TYPE\" = '10', \"CONTRACT_MAIN_ID\" = '813e50949ccd4a45baede559a1266842', \"MATCH_DATE_TYPE\" = '10', \"STATUS\" = '0', \"APPROVAL_TYPE\" = '02', \"CONTRACT_TERMS\" = '<p><span style=\"color: rgb(13, 20, 30); background-color: rgb(255, 255, 255);\">任职福建、浙江期间，习近平曾多次到访香港；到中央工作后，他负责中央港澳事务协调工作，对香港情况了解更加深入。2008年7月，时任国家副主席的习近平赴香港考察，给香港民众留下深刻印象。2017年、2022年，在香港回归祖国20周年、25周年的重大时刻，习近平主席都来到这里，为祝福、为支持、更为谋划更好的发展。</span></p>', \"NOUSE_STANDARD_TEMPLATE\" = '<p><span style=\"color: rgb(51, 51, 51); background-color: rgb(255, 255, 255); font-size: 13px;\">蔡徐坤事件发酵近一周之后，仍旧未等到其回应，反而等来了各大平台删除其信息的动态。继央视频后，多家平台清空其相关内容</span></p>', \"STANDARD_NUMBER\" = 23, \"STANDARD_QUALITY\" = 4577, \"CURRENCY_UNIT\" = '10', \"SUPPLY_CHAIN_UNIT\" = '104', \"IF_ACCOUNT_BY_GOODS\" = '0', \"IF_DLRL_CONTRACT\" = '0', \"IS_PRICE\" = '0', \"CREATOR_NAME\" = '测试多伦煤化工', \"MODIFY_NAME\" = '测试多伦煤化工' WHERE \"ID\" = 'cfa2c23512664b2192e874671f34aa89' AND \"CHANGED_CONTRACT_ID\" IS NULL AND \"CONTRACT_TYPE\" = '30' AND \"ORDER_GOODS_MODE\" IS NULL AND \"CONTRACT_TAB\" = '30' AND \"FIRST_PARTY_ID\" = '8ad184247ee84d1b017ee866f70a0167' AND \"SECOND_PARTY_ID\" = '40288a81513e22bd01513e7427d70245' AND \"BILL_NO\" = 'CDT-DTNMGDLMHGYXZRGS-2307-0001-CZ-L' AND \"VERSION_NO\" = '001' AND \"NAME\" = '测试杂费合同_yd2' AND \"SIGN_PLACE\" = '长沙' AND \"SIGN_DATE\" = DATE'2023-07-03' AND \"START_DATE\" = DATE'2023-07-03' AND \"END_DATE\" = DATE'2023-11-30' AND \"TRANSPORT\" IS NULL AND \"AUDIT_STATE\" = '0' AND \"ORGAN_ID\" = '8ad184247ee84d1b017ee866f70a0167' AND \"DATA_STATE\" = 10 AND \"LAST_UPDATE_DATE\" = TIMESTAMP'2023-07-03 10:34:55' AND \"LAST_UPDATED_BY\" = 'cdlm' AND \"CREATION_DATE\" = TIMESTAMP'2023-07-03 10:34:55' AND \"CREATED_BY\" = 'cdlm' AND \"DATA_ID\" IS NULL AND \"CONTRACT_CATEGORY\" = '10' AND \"BUY_MODE\" = '20' AND \"BUY_TYPE\" IS NULL AND \"WEIGHT_ACCORDING\" = '30' AND \"ASSAY_ACCORDING\" IS NULL AND \"IS_LOSS\" IS NULL AND \"LOSS\" IS NULL AND \"PRICE_TYPE\" IS NULL AND \"BILLING_MODE\" = '1' AND \"RECEIVING_TYPE\" IS NULL AND \"IS_BEAR\" IS NULL AND \"COUNTERSIGNED_CONTENT\" = '会签单主要内容文本域' AND \"PROFIT_EVALUATION\" = '利润测算文本域' AND \"BUSINESS_TYPE\" IS NULL AND \"MANAGE_TYPE\" = '10' AND \"CONTRACT_MAIN_ID\" = '813e50949ccd4a45baede559a1266842' AND \"BALANCE_DEPTCODE\" IS NULL AND \"BIDDING_NO\" IS NULL AND \"BIDDING_ID\" IS NULL AND \"MATCH_DATE_TYPE\" = '10' AND \"STATUS\" = '0' AND \"ORGLAYER\" IS NULL AND \"APPROVAL_TYPE\" = '02' AND \"SOURCE_ID\" IS NULL AND \"UNIFY_RESULTMSG\" IS NULL AND \"PAYMENT_METHOD\" IS NULL AND \"STANDARD_NUMBER\" = 23 AND \"STANDARD_QUALITY\" = 4577 AND \"CURRENCY_UNIT\" = '10' AND \"SUPPLY_CHAIN_UNIT\" = '104' AND \"ISLAW\" IS NULL AND \"IN_ID\" IS NULL AND \"ATTR1\" IS NULL AND \"IF_ACCOUNT_BY_GOODS\" = '0' AND \"IF_DLRL_CONTRACT\" = '0' AND \"REMOVE_BPM_TIME\" IS NULL AND \"REMOVE_ACCOUNT\" IS NULL AND \"FIRST_AUDIT_DATE\" IS NULL AND \"IF_DZCG\" IS NULL AND \"APPLY_UNLOCK\" IS NULL AND \"IS_PRICE\" = '0' AND \"OPTYPE\" IS NULL AND \"GX_STATUS\" IS NULL AND \"IS_EDIT\" IS NULL AND \"PROC_INST_ID\" IS NULL AND \"CREATOR_NAME\" = '测试多伦煤化工' AND \"MODIFY_NAME\" = '测试多伦煤化工' AND \"FORMAL_SIGN\" IS NULL;";
-
+        String sqlRedo = "UPDATE \"RL_FUEL_RLDD\".\"RL_DYGL_WATERCOALPLAN\" SET \"FOREIGNID\" = '9dc4ec87b9e942bea6b482f535196145', \"JHMZ\" = '03', \"RZ\" = 101, \"LF\" = 10, \"HFF\" = 10, \"QT\" = 120, \"YJZCRQ\" = DATE'2023-07-07', \"NZCG\" IS NULL, \"JHCM\" = '长沙南01', \"JHHC\" = '3', \"JHZHL\" = 200, \"JHKJ\" IS NULL, \"HTSX\" = '20', \"GYSID\" = 'd0c6cc58a66546a59ccf67d1a3470b47', \"GYSNAME\" = '新疆宝鑫昆仑矿业有限责任公司', \"JHCGL\" IS NULL, \"NBHCBM\" = 'DTJT-HNGS-JZS-202310-002', \"YJDCRQ\" = DATE'2023-07-07', \"MDG\" IS NULL, \"SJHCBM\" IS NULL, \"HCLAYER\" IS NULL, \"DYDW\" = '102', \"YJDGSJ\" = DATE'2023-07-07', \"SJDGSJ\" IS NULL, \"CBTBSJ\" IS NULL, \"BW\" IS NULL, \"KBSJ\" IS NULL, \"KGSJ\" IS NULL, \"WGSJ\" IS NULL, \"LGSJ\" = DATE'2023-08-06', \"SJZHL\" IS NULL, \"SJMZ\" IS NULL, \"QNET\" IS NULL, \"MT\" IS NULL, \"AAR\" IS NULL, \"VAR\" IS NULL, \"STAR\" IS NULL, \"STD\" IS NULL, \"ST\" = 20, \"WCQK\" IS NULL, \"SJDCRQ\" IS NULL, \"XQDW\" = '金竹山', \"XQDWID\" = '304', \"SJZHL_DC\" IS NULL, \"SJMZ_DC\" IS NULL, \"QNET_DC\" IS NULL, \"MT_DC\" IS NULL, \"AAR_DC\" IS NULL, \"VAR_DC\" IS NULL, \"STAR_DC\" IS NULL, \"STD_DC\" IS NULL, \"ST_DC\" IS NULL, \"CREATEUSER\" = '模拟用户001', \"STATE\" = '2', \"CREATEORGID\" IS NULL, \"RQ\" IS NULL, \"CID\" IS NULL, \"LCRQ\" IS NULL, \"JHCMID\" = 'de2a5aa7-c456-443f-8e94-63ff1edf22ad', \"HF\" = 10, \"QS\" = 10.23, \"BCLD\" = 11, \"KJ\" = 0, \"YF\" = 1.2, \"DCJ\" = 101, \"BMDJ\" = 7000, \"KDID\" = '8ad184247ce3f851017ce42b1fe3057f', \"VARIETYID\" = 'CFDB82F73C020338E0530A5104740593', \"KDNAME\" = '牛山煤矿', \"VARIETY\" = '牛山煤矿+无烟煤+5300', \"HTH\" = 'CDT-HNGS-JZS-2306-0009-CM', \"YSDWID\" IS NULL, \"YSDW\" IS NULL, \"REMARK\" IS NULL, \"YJLGSJ\" = DATE'2023-08-06', \"ZF\" = 100, \"YJDCSJ\" = DATE'2023-07-07', \"YJLCSJ\" = DATE'2023-08-06', \"YSHTH\" IS NULL, \"RLHTH\" IS NULL, \"CD\" IS NULL, \"UPDATETIME\" = TIMESTAMP'2023-07-07 11:24:20.929', \"CGJHXMID\" IS NULL, \"HRD\" IS NULL, \"SCMCGQKJJG\" IS NULL, \"MXDCXSHTJ\" = 201, \"KBDRPCSCJ\" IS NULL, \"DYSCJ\" = 100, \"MYD\" IS NULL, \"MYDMZ\" IS NULL, \"SZGK\" IS NULL, \"ZGXHSL\" IS NULL, \"ZGLJRZ\" IS NULL, \"ZGLJLF\" IS NULL, \"ZGLJHRD\" IS NULL, \"ZGDWH\" IS NULL, \"HXDCQK\" IS NULL, \"ISGKBHCZ\" IS NULL, \"ISCBASDG\" IS NULL, \"ISCBZHZC\" IS NULL, \"DYYCYY\" IS NULL, \"ZHG\" IS NULL, \"DDZGSJ\" IS NULL, \"DGCCJHTS\" IS NULL, \"ZGKBSJ\" IS NULL, \"ZGLGSJ\" IS NULL, \"ZGYS\" IS NULL, \"ZGYBCS\" IS NULL, \"ZGSJZZL\" IS NULL, \"ZGRZ\" IS NULL, \"ZGLF\" IS NULL, \"ZGHRD\" IS NULL, \"DYXHG\" IS NULL, \"DDXGSJ\" IS NULL, \"XHGKBSJ\" IS NULL, \"XHGLGSJ\" IS NULL, \"XGYS\" IS NULL, \"XGSL\" IS NULL, \"XGRZ\" IS NULL, \"XGLF\" IS NULL, \"XGHRD\" IS NULL, \"XGBZ\" IS NULL, \"CREATETIME\" = TIMESTAMP'2023-07-07 09:26:55', \"UPDATEUSER\" = '48dc3dc5-dcc1-437d-b2ac-ef5805b45c01', \"CREATOR_NAME\" = '模拟用户001', \"MODIFY_NAME\" = '模拟用户001', \"HTID\" = 'ef1a1ef549614c899d05575502efa457', \"DETERMINE_PRICE\" = 100, \"CONFIRM_PURCHASE\" = 'tst', \"FZID\" = '8ad184247ce3f851017ce42b201c0580', \"FZ\" = '牛山煤矿' WHERE \"ID\" = '38fd2c51bbea485ab7dbf5460aaa5a5f' AND \"FOREIGNID\" = '9dc4ec87b9e942bea6b482f535196145' AND \"JHMZ\" = '03' AND \"RZ\" = 101 AND \"LF\" = 10 AND \"HFF\" = 10 AND \"QT\" = 120 AND \"YJZCRQ\" = DATE'2023-07-07' AND \"NZCG\" IS NULL AND \"JHCM\" = '长沙南01' AND \"JHHC\" = '3' AND \"JHZHL\" = 200 AND \"JHKJ\" IS NULL AND \"HTSX\" = '20' AND \"GYSID\" = 'd0c6cc58a66546a59ccf67d1a3470b47' AND \"GYSNAME\" = '新疆宝鑫昆仑矿业有限责任公司' AND \"JHCGL\" IS NULL AND \"NBHCBM\" = 'DTJT-HNGS-JZS-202310-002' AND \"YJDCRQ\" = DATE'2023-07-07' AND \"MDG\" IS NULL AND \"SJHCBM\" IS NULL AND \"HCLAYER\" IS NULL AND \"DYDW\" = '102' AND \"YJDGSJ\" = DATE'2023-07-07' AND \"SJDGSJ\" IS NULL AND \"CBTBSJ\" IS NULL AND \"BW\" IS NULL AND \"KBSJ\" IS NULL AND \"KGSJ\" IS NULL AND \"WGSJ\" IS NULL AND \"LGSJ\" = DATE'2023-08-06' AND \"SJZHL\" IS NULL AND \"SJMZ\" IS NULL AND \"QNET\" IS NULL AND \"MT\" IS NULL AND \"AAR\" IS NULL AND \"VAR\" IS NULL AND \"STAR\" IS NULL AND \"STD\" IS NULL AND \"ST\" = 20 AND \"WCQK\" IS NULL AND \"SJDCRQ\" IS NULL AND \"XQDW\" = '金竹山' AND \"XQDWID\" = '304' AND \"SJZHL_DC\" IS NULL AND \"SJMZ_DC\" IS NULL AND \"QNET_DC\" IS NULL AND \"MT_DC\" IS NULL AND \"AAR_DC\" IS NULL AND \"VAR_DC\" IS NULL AND";
+        String rest = "CL\" IS NULL AND \"EJGLJGDZHYTGCL_TITLE\" IS NULL AND \"EJGLJGDZHYTGCL\" IS NULL AND \"TZZTSX\" IS NULL AND \"TZZTSX_TITLE\" IS NULL AND \"SPLX_TITLE\" = '集团审批' AND \"GYSZT_TITLE\" = '正常' AND \"JYNL\" IS NULL AND \"jjptid\" = '0f04a9d8df924b6e85d2fa96bf69ccbb'";
         // Parse SQL Redo and convert to JSON
-        String json = parseUpdateSqlRedoToJson(sqlRedo);
+        JsonObject json = parseUpdateSqlRedoToJson(sqlRedo);
 
 
         System.out.println(json);
     }
 
-    public static String parseInsertSqlRedoToJson(String sqlRedo) {
+    public static JsonObject parseInsertSqlRedoToJson(String sqlRedo) {
         String[] parts = sqlRedo.split("\\((?=(?:[^']*'[^']*')*[^']*$)");
-        String tableName = parts[0].split("\\bINSERT INTO\\b")[1].replaceAll("\"", "");
+        String tableName = parts[0].split("\\bINSERT INTO\\b")[1].replaceAll("\"", "").toUpperCase();
         String columnsPart = parts[1].split("\\)")[0];
         String valuesPart = parts[2].split("\\)(?=(?:[^']*'[^']*')*[^']*$)")[0];
 
@@ -69,18 +68,19 @@ public class SqlRedoToJsonConverter {
         jsonObject.addProperty("opr", "insert");
 
         //return new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
-        return new GsonBuilder().create().toJson(jsonObject);
+        //return new GsonBuilder().create().toJson(jsonObject);
+        return jsonObject;
     }
 
-    public static String parseDelSqlRedoToJson(String sqlRedo) {
+    public static JsonObject parseDelSqlRedoToJson(String sqlRedo) {
         String[] parts = sqlRedo.split("\\bWHERE\\b");
-        String tableName = parts[0].split("\\bDELETE FROM\\b")[1].replaceAll("\"", "");
+        String tableName = parts[0].split("\\bDELETE FROM\\b")[1].replaceAll("\"", "").toUpperCase();
 
         String[] conditions = parts[1].trim().split("\\bAND\\b");
 
         Map<String, String> conditionMap = new HashMap<>();
         for (String condition : conditions) {
-            String[] keyValue = condition.trim().split("((?<![!=<>])=|<>(?!=)|<=|>=|<|>|\\bIS\\b)",2);
+            String[] keyValue = condition.trim().split("((?<![!=<>])=|<>(?!=)|<=|>=|<|>|\\bIS\\b)", 2);
             String key = keyValue[0].trim().replaceAll("\"", "");
             String value = keyValue[1].trim().replaceAll("'", "");
             // 给内部双引号加上转义符
@@ -117,9 +117,9 @@ public class SqlRedoToJsonConverter {
 
     }
 
-    public static String parseUpdateSqlRedoToJson(String sqlRedo) {
+    public static JsonObject parseUpdateSqlRedoToJson(String sqlRedo) {
         String[] parts = sqlRedo.split("\\bSET\\b|\\bWHERE\\b");
-        String tableName = parts[0].split("\\bUPDATE\\b")[1].trim().replaceAll("\"", "");
+        String tableName = parts[0].split("\\bUPDATE\\b")[1].trim().replaceAll("\"", "").toUpperCase();
         String setClause = parts[1].trim();
         String whereClause = parts[2].trim();
 
@@ -133,7 +133,7 @@ public class SqlRedoToJsonConverter {
         String[] setPairs = setClause.split(",(?=(?:[^']*'[^']*')*[^']*$)");
         for (int i = 0; i < setPairs.length; i++) {
             String pair = setPairs[i];
-            String[] keyValue = pair.split("=|\\bIS\\b",2);
+            String[] keyValue = pair.split("=|\\bIS\\b", 2);
             if (keyValue.length != 2) {
                 throw new IllegalArgumentException("Invalid SQL Redo format");
             }
@@ -155,7 +155,7 @@ public class SqlRedoToJsonConverter {
         String[] conditions = whereClause.split("\\bAND\\b");
         for (int i = 0; i < conditions.length; i++) {
             String condition = conditions[i].trim();
-            String[] keyValue = condition.split("((?<![!=<>])=|<>(?!=)|<=|>=|<|>|\\bIS\\b)",2);
+            String[] keyValue = condition.split("((?<![!=<>])=|<>(?!=)|<=|>=|<|>|\\bIS\\b)", 2);
             if (keyValue.length != 2) {
                 throw new IllegalArgumentException("Invalid SQL Redo format");
             }
@@ -177,7 +177,7 @@ public class SqlRedoToJsonConverter {
         return convertDelUpdateToInsert(jsonBuilder.toString(), false);
     }
 
-    private static String convertDelUpdateToInsert(String updateResultJson, boolean isDel) {
+    private static JsonObject convertDelUpdateToInsert(String updateResultJson, boolean isDel) {
         JsonObject updateResultObject = new Gson().fromJson(updateResultJson, JsonObject.class);
         JsonObject insertResultObject = new JsonObject();
 
@@ -206,6 +206,7 @@ public class SqlRedoToJsonConverter {
 
 
         //return new GsonBuilder().setPrettyPrinting().create().toJson(insertResultObject);
-        return new GsonBuilder().create().toJson(insertResultObject);
+        //return new GsonBuilder().create().toJson(insertResultObject);
+        return insertResultObject;
     }
 }

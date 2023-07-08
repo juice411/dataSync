@@ -69,7 +69,7 @@ public class KafkaConsumerService {
                     // 处理JSON数据，这里只是简单地打印出来
                     logger.debug("消费消息:{} ", record.value());
                     //交给Oracle写入处理器
-                    OracleWriter.sync2Oracle(record.value());
+                    //OracleWriter.sync2Oracle(record.value());
                 }
             }
         } finally {

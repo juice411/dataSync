@@ -25,6 +25,9 @@ public class DirectoryMonitor {
             logger = LoggerFactory.getLogger(DirectoryMonitor.class);
             // 初始化日志记录器
             logger.info("logmnr started！");
+
+            ConfigUtil.init();
+
             // 创建 WatchService 对象
             WatchService watchService = FileSystems.getDefault().newWatchService();
 
@@ -66,7 +69,8 @@ public class DirectoryMonitor {
                             }
                             //readFileContents(modifiedFile); // 读取文件内容
                             //进行日志分析,根据目前分析，一个256M的日志文件，总大小1G的日志设定，一个日志最大记录数不超过6万，所以设定10万足够取完
-                            Dbmslob.parseMinerLog(ConfigUtil.getProperty("dm.host"), Integer.parseInt(ConfigUtil.getProperty("dm.port")), ConfigUtil.getProperty("dm.user"), ConfigUtil.getProperty("dm.pwd"), modifiedFile.getAbsolutePath(), Integer.parseInt(ConfigUtil.getProperty("dm.logmnr.max.records")));
+                            //Dbmslob.parseMinerLog(ConfigUtil.getProperty("dm.host"), Integer.parseInt(ConfigUtil.getProperty("dm.port")), ConfigUtil.getProperty("dm.user"), ConfigUtil.getProperty("dm.pwd"), modifiedFile.getAbsolutePath(), Integer.parseInt(ConfigUtil.getProperty("dm.logmnr.max.records")));
+                            Dbmslob.parseMinerLog(modifiedFile.getAbsolutePath());
 
                             // 更新最后一次修改事件的时间戳
                             lastModifiedTime = currentModifiedTime;

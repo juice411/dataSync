@@ -2,6 +2,7 @@ package com.dtxy.sync.dm2orcl;
 
 import com.dameng.logmnr.LogmnrDll;
 import com.dameng.logmnr.LogmnrRecord;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,10 +10,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.sql.*;
 
 public class Dbmslob {
     private static final Logger logger = LoggerFactory.getLogger(Dbmslob.class);
-    private static KafkaProducerService kafkaProducerService = new KafkaProducerService(ConfigUtil.getProperty("kafka.bootstrap.servers"));
+    private static final String moniterTable;
 
     static {
 
@@ -24,77 +26,148 @@ public class Dbmslob {
             logger.error("出错了：{}", e.getMessage());
         }
 
+        moniterTable = ExcelReader.getTables();
+
     }
 
+    public static void parseMinerLog(String archPath) {
+        Connection connection = null;
+        Statement statement = null;
+        PreparedStatement selectStatement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = ConfigUtil.getDMDs().getConnection();
+            statement = connection.createStatement();
 
-    public static void parseMinerLog(String host, int port, String user, String pwd, String logPath, int maxRec) throws FileNotFoundException, UnsupportedEncodingException {
-        LogmnrDll.initLogmnr();
-        long connid = LogmnrDll.createConnect(host, port, user, pwd);
-        LogmnrDll.addLogFile(connid, logPath, 3);
-        LogmnrDll.startLogmnr(connid, -1, null, null);
-        LogmnrRecord[] arr = LogmnrDll.getData(connid, maxRec);
-        LogmnrDll.endLogmnr(connid, 1);
-        LogmnrDll.deinitLogmnr();
-        //调试用
-        //print2file(arr);
+            String sql_addLogFile = String.format("DBMS_LOGMNR.ADD_LOGFILE('%s');",archPath);
+            //String sql_startLogmnr="DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTTIME=>TO_DATE('2023-07-07 11:20:00','YYYY-MM-DD HH24:MI:SS') , ENDTIME=>TO_DATE('2023-07-07 11:25:00','YYYY-MM-DD HH24:MI:SS'));";
+            String sql_startLogmnr = String.format("DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTSCN=>%d);", PositionRecorder.getLastProcessedPosition() + 1);
+            String sql_endLogmnr = "dbms_logmnr.end_logmnr()";
+            statement.addBatch(sql_addLogFile);
+            statement.addBatch(sql_startLogmnr);
 
+            statement.executeBatch();
+            statement.close();
 
-        for (LogmnrRecord rec : arr) {
-            if (rec.getScn() <= PositionRecorder.getLastProcessedPosition()) {
-                logger.debug("被忽略的scn：{}", rec.getScn());
-                continue;
-            } else {
-                //判断操作类型（1、2、3）并且是否为被同步的表
-                if (rec.getOperationCode() == 1) {
-                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
-                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
-                        kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseInsertSqlRedoToJson(rec.getSqlRedo()));
-                        /*System.out.println("=========================================");
-                        System.out.println(rec.getScn());
-                        System.out.println(rec.getSqlRedo());
-                        System.out.println(SqlRedoToJsonConverter.parseInsertSqlRedoToJson(rec.getSqlRedo()));*/
+            // 查询数据
+            String selectSql = String.format("select scn,sql_redo,OPERATION_CODE,COMMIT_TIMESTAMP,SEG_OWNER,TABLE_NAME,ssn,csf from v$logmnr_contents where scn >=%d and seg_owner in (%s) and table_name in (%s) and operation_code in (1,2,3) order by scn", PositionRecorder.getLastProcessedPosition() + 1, ConfigUtil.getProperty("monitor.segOwner"), moniterTable);
+            selectStatement = connection.prepareStatement(selectSql);
+            resultSet = selectStatement.executeQuery();
 
+            //临时拼接sql,保障完整性
+            StringBuilder sqlBuilder = new StringBuilder();
+
+            // 解析查询结果
+            while (resultSet.next()) {
+                long scn = resultSet.getLong("scn");
+                String sql_redo = resultSet.getString("sql_redo");
+                String commitTime = resultSet.getString("COMMIT_TIMESTAMP");
+                int opr_code = resultSet.getInt("OPERATION_CODE");
+                int ssn = resultSet.getInt("ssn");
+                int csf = resultSet.getInt("csf");
+
+                //检查sql完整性
+                if (ssn == 0 && csf == 1) {//说明sql还有后续内容
+                    if (sqlBuilder.length() > 0) {//说明后边的部分已经提前追加到里面了
+                        sqlBuilder.insert(0, sql_redo);
+                        sql_redo = sqlBuilder.toString();
+                        // 清空内容
+                        sqlBuilder.setLength(0);
+                    } else {
+                        sqlBuilder.append(sql_redo);
+                        continue;
                     }
 
-                } else if (rec.getOperationCode() == 2) {
-                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
-                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
-                        kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseDelSqlRedoToJson(rec.getSqlRedo()));
-                        /*System.out.println("=========================================");
-                        System.out.println(rec.getScn());
-                        System.out.println(rec.getSqlRedo());
-                        System.out.println(SqlRedoToJsonConverter.parseDelSqlRedoToJson(rec.getSqlRedo()));*/
-
-                    }
-
-                } else if (rec.getOperationCode() == 3) {
-                    if (ExcelReader.isContains(rec.getSegOwner() + "." + rec.getTableName())) {
-                        logger.info("待发送scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
-                        kafkaProducerService.sendMessage(ConfigUtil.getProperty("kafka.logmnr.topic"), SqlRedoToJsonConverter.parseUpdateSqlRedoToJson(rec.getSqlRedo()));
-                        /*System.out.println("=========================================");
-                        System.out.println(rec.getScn());
-                        System.out.println(rec.getSqlRedo());
-                        System.out.println(SqlRedoToJsonConverter.parseUpdateSqlRedoToJson(rec.getSqlRedo()));*/
-
+                } else if (ssn == 1 && csf == 1) {//说明sql仍然未结束
+                    sqlBuilder.append(" ").append(sql_redo);
+                    continue;
+                } else if (ssn == 1 && csf == 0) {//说明sql已结束
+                    if (sqlBuilder.length() == 0) {//说明后边的部分先到了，需要等前边的过来
+                        sqlBuilder.append(" ").append(sql_redo);
+                        continue;
+                    } else {
+                        sqlBuilder.append(" ").append(sql_redo);
+                        sql_redo = sqlBuilder.toString();
+                        // 清空内容
+                        sqlBuilder.setLength(0);
                     }
 
                 }
 
-                //logger.info("已处理scn：{},原始redo_sql：{}", rec.getScn(), rec.getSqlRedo());
+                // 处理查询结果
+                JsonObject jsonObject = null;
+                if (opr_code == 1) {
+                    jsonObject = SqlRedoToJsonConverter.parseInsertSqlRedoToJson(sql_redo);
+
+                } else if (opr_code == 2) {
+                    jsonObject = SqlRedoToJsonConverter.parseDelSqlRedoToJson(sql_redo);
+
+                } else if (opr_code == 3) {
+                    jsonObject = SqlRedoToJsonConverter.parseUpdateSqlRedoToJson(sql_redo);
+
+                }
+
+                logger.debug("原始信息：scn：{}，commit_time:{}，sql:{}", scn, commitTime, sql_redo);
+                OracleWriter.sync2Oracle(jsonObject);
 
                 //记录处理位置
-                PositionRecorder.recordPosition(rec.getScn());
+                PositionRecorder.recordPosition(scn);
             }
 
-        }
+            //关闭日志分析
+            statement = connection.createStatement();
+            statement.addBatch(sql_endLogmnr);
+            statement.executeBatch();
 
-        try {
-            PositionRecorder.savePositionToFile();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            logger.error("出错了：{}", e.getMessage());
-        }
+            logger.error("解析配置出错了：{}", e.getMessage());
+        } finally {
+            try {
+                PositionRecorder.savePositionToFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error("保存scn出错了：{}", e.getMessage());
+            }
 
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("关闭达梦连接出错了：{}", e.getMessage());
+                }
+            }
+            if (selectStatement != null) {
+                try {
+                    selectStatement.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("关闭达梦连接出错了：{}", e.getMessage());
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("关闭达梦连接出错了：{}", e.getMessage());
+                }
+            }
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("关闭达梦连接出错了：{}", e.getMessage());
+                }
+            }
+        }
     }
 
     private static void print2file(LogmnrRecord[] arr) throws FileNotFoundException, UnsupportedEncodingException {
@@ -141,11 +214,4 @@ public class Dbmslob {
         ps.close();
     }
 
-    public static void main(String[] args) {
-        try {
-            parseMinerLog("192.168.24.4", 5236, "RL_FUEL_RLDD", "RL_FUEL_RLDD", "E:\\project\\myTest\\src\\main\\resources\\ARCHIVE_LOCAL1_20230606174857596249_0.log", 100000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

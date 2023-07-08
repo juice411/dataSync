@@ -24,7 +24,7 @@ public class FieldMapping {
         }else
             return getFieldMappingFromSimple(dm_field,oracle_field);*/
 
-        return getFieldMappingFromSimple(dm_field,oracle_field);
+        return getFieldMappingFromSimple(dm_field, oracle_field);
     }
 
     //从简单的字段列表获取
@@ -64,6 +64,7 @@ public class FieldMapping {
 
         return map;
     }
+
     private static boolean containsSelect(String sql) {
         String regex = "(?i)SELECT"; // (?i)表示忽略大小写
         Pattern pattern = Pattern.compile(regex);

@@ -28,6 +28,26 @@ public class ExcelReader {
         return dataMap.containsKey(dm_tab);
     }
 
+    public static String getTables() {
+        StringBuilder sb = new StringBuilder();
+        for (String key : dataMap.keySet()) {
+            // 拼接单引号和键的值到 StringBuilder
+            sb.append("'");
+            String[] tmp = key.split("\\.", 2);
+            sb.append(tmp[1]);
+            sb.append("'");
+            sb.append(",");
+        }
+
+// 删除最后一个逗号
+        if (sb.length() > 0) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+
+        return sb.toString();
+
+    }
+
     public static JsonObject getBaseInfo(String dm_tab) {
         return dataMap.get(dm_tab);
     }

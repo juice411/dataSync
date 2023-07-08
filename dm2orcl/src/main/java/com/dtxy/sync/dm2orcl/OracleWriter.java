@@ -1,6 +1,5 @@
 package com.dtxy.sync.dm2orcl;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import oracle.jdbc.pool.OracleDataSource;
 import org.slf4j.Logger;
@@ -41,11 +40,11 @@ public class OracleWriter {
         sync2Oracle(jsonData,FIELD_MAPPING);*/
     }
 
-    public static void sync2Oracle(String redo_sql) {
+    public static void sync2Oracle(JsonObject jsonData) throws Exception {
 
         try {
-            Gson gson = new Gson();
-            JsonObject jsonData = gson.fromJson(redo_sql, JsonObject.class);
+            /*Gson gson = new Gson();
+            JsonObject jsonData = gson.fromJson(redo_sql, JsonObject.class);*/
             //先获取被操作的达梦表
             String dm_tab = jsonData.get("table").getAsString().trim();
             //获取操作类型
@@ -82,10 +81,10 @@ public class OracleWriter {
 
             // 设置字段值并执行同步
             if (opr.equalsIgnoreCase("insert")) {
-                setParameterValues(statement, values, FIELD_MAPPING,sql);
+                setParameterValues(statement, values, FIELD_MAPPING, sql);
             } else if (opr.equalsIgnoreCase("update")) {
-                setUpdateParameterValues(statement, values, jsonData.getAsJsonObject("set"), FIELD_MAPPING,sql);
-            }else {
+                setUpdateParameterValues(statement, values, jsonData.getAsJsonObject("set"), FIELD_MAPPING, sql);
+            } else {
                 logger.debug("同步Oracle的sql：{}", sql);
             }
 
@@ -116,13 +115,15 @@ public class OracleWriter {
             connection.close();
 
             logger.debug("{}", "数据同步 Oracle 成功！");
-        } catch (Exception e) {
+        } catch (SQLException e) {
             logger.error("数据同步 Oracle 失败：{}", e.getMessage());
+        } catch (Exception e) {
+            throw e;
         }
     }
 
     // 拼接插入语句
-    private static String buildInsertSql(Map<String, String> FIELD_MAPPING, String oracle_tab) {
+    private static String buildInsertSql(Map<String, String> FIELD_MAPPING, String oracle_tab) throws Exception {
         StringBuilder sqlBuilder = new StringBuilder("INSERT INTO ").append(oracle_tab).append(" (");
         StringBuilder placeholderBuilder = new StringBuilder("VALUES (");
         boolean isFirst = true;
@@ -133,12 +134,12 @@ public class OracleWriter {
                     sqlBuilder.append(", ");
                     placeholderBuilder.append(", ");
                 }
-                String []tmp=oracle_field.split("=",2);
+                String[] tmp = oracle_field.split("=", 2);
                 sqlBuilder.append(tmp[0].trim());
                 placeholderBuilder.append(tmp[1].trim()).append("(").append("?").append(")");
                 isFirst = false;
 
-            }else {
+            } else {
                 if (!isFirst) {
                     sqlBuilder.append(", ");
                     placeholderBuilder.append(", ");
@@ -155,23 +156,23 @@ public class OracleWriter {
     }
 
     // 拼接更新语句
-    private static String buildUpdateSql(Map<String, String> FIELD_MAPPING, String oracle_tab, JsonObject set) {
+    private static String buildUpdateSql(Map<String, String> FIELD_MAPPING, String oracle_tab, JsonObject set) throws Exception {
         StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(oracle_tab).append(" SET ");
         boolean isFirst = true;
         for (String dm_field : FIELD_MAPPING.keySet()) {
             //判断达梦字段是否包含了#号
-            if(dm_field.contains("#")){
-                String []tmp=dm_field.split("#");
+            if (dm_field.contains("#")) {
+                String[] tmp = dm_field.split("#");
                 if (set.has(tmp[0].toUpperCase())) {
                     String oracle_field = FIELD_MAPPING.get(dm_field);
                     if (oracle_field.contains("=")) {//是否存在函数表达式
                         if (!isFirst) {
                             sqlBuilder.append(", ");
                         }
-                        tmp=oracle_field.split("=");
+                        tmp = oracle_field.split("=");
                         sqlBuilder.append(tmp[0].trim()).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
                         isFirst = false;
-                    }else {
+                    } else {
                         if (!isFirst) {
                             sqlBuilder.append(", ");
                         }
@@ -180,17 +181,17 @@ public class OracleWriter {
                     }
                 }
 
-            }else {
+            } else {
                 if (set.has(dm_field)) {
                     String oracle_field = FIELD_MAPPING.get(dm_field);
                     if (oracle_field.contains("=")) {//是否存在函数表达式
                         if (!isFirst) {
                             sqlBuilder.append(", ");
                         }
-                        String []tmp=oracle_field.split("=");
+                        String[] tmp = oracle_field.split("=");
                         sqlBuilder.append(tmp[0].trim()).append(" = ").append(tmp[1].trim()).append("(").append("?").append(")");
                         isFirst = false;
-                    }else {
+                    } else {
                         if (!isFirst) {
                             sqlBuilder.append(", ");
                         }
@@ -210,7 +211,7 @@ public class OracleWriter {
     }
 
     // 拼接删除语句
-    private static String buildDeleteSql(Map<String, String> FIELD_MAPPING, String oracle_tab) {
+    private static String buildDeleteSql(Map<String, String> FIELD_MAPPING, String oracle_tab) throws Exception {
         StringBuilder sqlBuilder = new StringBuilder("DELETE FROM ").append(oracle_tab);
         sqlBuilder.append(" WHERE your_condition");
 
@@ -218,44 +219,44 @@ public class OracleWriter {
     }
 
     // 设置 PreparedStatement 对象的参数值
-    private static void setParameterValues(PreparedStatement statement, JsonObject jsonData, Map<String, String> FIELD_MAPPING, String sql) throws SQLException {
+    private static void setParameterValues(PreparedStatement statement, JsonObject jsonData, Map<String, String> FIELD_MAPPING, String sql) throws Exception {
         // 设置字段值并执行插入
         int index = 1;
         for (String dm_field : FIELD_MAPPING.keySet()) {
             String value;
             //判断达梦字段是否包含了#号
-            if(dm_field.contains("#")){
-                String []tmp=dm_field.split("#",2);
+            if (dm_field.contains("#")) {
+                String[] tmp = dm_field.split("#", 2);
                 value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
-            }else {
+            } else {
                 value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
             }
 
-            if(value.equals("NULL")){
-                value=null;
-            }else if(value.contains("TIMESTAMP")){
+            if (value.equals("NULL")) {
+                value = null;
+            } else if (value.contains("TIMESTAMP")) {
                 Pattern regex = Pattern.compile(pattern);
                 Matcher matcher = regex.matcher(value);
                 if (matcher.find()) {
                     String timestamp = matcher.group(1);
-                    value=timestamp;
+                    value = timestamp;
                 }
 
-            }else if(value.contains("DATE")){
+            } else if (value.contains("DATE")) {
                 Pattern regex = Pattern.compile(pattern);
                 Matcher matcher = regex.matcher(value);
                 if (matcher.find()) {
                     String timestamp = matcher.group(2);
-                    value=timestamp += " 00:00:00";
+                    value = timestamp += " 00:00:00";
                 }
 
             }
             statement.setObject(index++, value);
 
             // 拼接完整的 SQL 语句,主要是方便定位问题
-            if(value==null){
+            if (value == null) {
                 sql = sql.replaceFirst("\\?", "''");
-            }else
+            } else
                 sql = sql.replaceFirst("\\?", "'" + value + "'");
 
 
@@ -265,32 +266,32 @@ public class OracleWriter {
     }
 
     // 设置 PreparedStatement 对象的参数值
-    private static void setUpdateParameterValues(PreparedStatement statement, JsonObject jsonData, JsonObject set, Map<String, String> FIELD_MAPPING, String sql) throws SQLException {
+    private static void setUpdateParameterValues(PreparedStatement statement, JsonObject jsonData, JsonObject set, Map<String, String> FIELD_MAPPING, String sql) throws Exception {
         // 设置字段值并执行插入
         int index = 1;
         for (String dm_field : FIELD_MAPPING.keySet()) {
             String value;
             //判断达梦字段是否包含了#号
-            if(dm_field.contains("#")){
-                String []tmp=dm_field.split("#",2);
+            if (dm_field.contains("#")) {
+                String[] tmp = dm_field.split("#", 2);
                 if (set.has(tmp[0].toUpperCase())) {
                     value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
-                    if(value.equals("NULL")){
-                        value=null;
-                    }else if(value.contains("TIMESTAMP")){
+                    if (value.equals("NULL")) {
+                        value = null;
+                    } else if (value.contains("TIMESTAMP")) {
                         Pattern regex = Pattern.compile(pattern);
                         Matcher matcher = regex.matcher(value);
                         if (matcher.find()) {
                             String timestamp = matcher.group(1);
-                            value=timestamp;
+                            value = timestamp;
                         }
 
-                    }else if(value.contains("DATE")){
+                    } else if (value.contains("DATE")) {
                         Pattern regex = Pattern.compile(pattern);
                         Matcher matcher = regex.matcher(value);
                         if (matcher.find()) {
                             String timestamp = matcher.group(2);
-                            value=timestamp += " 00:00:00";
+                            value = timestamp += " 00:00:00";
                         }
 
                     }
@@ -298,39 +299,39 @@ public class OracleWriter {
                     statement.setObject(index++, value);
 
                     // 拼接完整的 SQL 语句,主要是方便定位问题
-                    if(value==null){
+                    if (value == null) {
                         sql = sql.replaceFirst("\\?", "''");
-                    }else
+                    } else
                         sql = sql.replaceFirst("\\?", "'" + value + "'");
                 }
-            }else {
+            } else {
                 if (set.has(dm_field.toUpperCase())) {
                     value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
-                    if(value.equals("NULL")){
-                        value=null;
-                    }else if(value.contains("TIMESTAMP")){
+                    if (value.equals("NULL")) {
+                        value = null;
+                    } else if (value.contains("TIMESTAMP")) {
                         Pattern regex = Pattern.compile(pattern);
                         Matcher matcher = regex.matcher(value);
                         if (matcher.find()) {
                             String timestamp = matcher.group(1);
-                            value=timestamp;
+                            value = timestamp;
                         }
 
-                    }else if(value.contains("DATE")){
+                    } else if (value.contains("DATE")) {
                         Pattern regex = Pattern.compile(pattern);
                         Matcher matcher = regex.matcher(value);
                         if (matcher.find()) {
                             String timestamp = matcher.group(2);
-                            value=timestamp += " 00:00:00";
+                            value = timestamp += " 00:00:00";
                         }
 
                     }
                     statement.setObject(index++, value);
 
                     // 拼接完整的 SQL 语句,主要是方便定位问题
-                    if(value==null){
+                    if (value == null) {
                         sql = sql.replaceFirst("\\?", "''");
-                    }else
+                    } else
                         sql = sql.replaceFirst("\\?", "'" + value + "'");
                 }
             }
