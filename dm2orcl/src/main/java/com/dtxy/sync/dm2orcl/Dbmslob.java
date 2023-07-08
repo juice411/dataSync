@@ -1,15 +1,10 @@
 package com.dtxy.sync.dm2orcl;
 
-import com.dameng.logmnr.LogmnrDll;
-import com.dameng.logmnr.LogmnrRecord;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.sql.*;
 
 public class Dbmslob {
@@ -39,7 +34,7 @@ public class Dbmslob {
             connection = ConfigUtil.getDMDs().getConnection();
             statement = connection.createStatement();
 
-            String sql_addLogFile = String.format("DBMS_LOGMNR.ADD_LOGFILE('%s');",archPath);
+            String sql_addLogFile = String.format("DBMS_LOGMNR.ADD_LOGFILE('%s');", archPath);
             //String sql_startLogmnr="DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTTIME=>TO_DATE('2023-07-07 11:20:00','YYYY-MM-DD HH24:MI:SS') , ENDTIME=>TO_DATE('2023-07-07 11:25:00','YYYY-MM-DD HH24:MI:SS'));";
             String sql_startLogmnr = String.format("DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTSCN=>%d);", PositionRecorder.getLastProcessedPosition() + 1);
             String sql_endLogmnr = "dbms_logmnr.end_logmnr()";
@@ -168,50 +163,6 @@ public class Dbmslob {
                 }
             }
         }
-    }
-
-    private static void print2file(LogmnrRecord[] arr) throws FileNotFoundException, UnsupportedEncodingException {
-        PrintStream ps = new PrintStream("E:\\project\\dataSync\\result.txt");
-        System.setOut(ps);
-        System.out.println("日志分析结果打印：");
-        for (int i = 0; i < arr.length; i++) {
-            System.out.println("-----------------------------" + i + "-----------------------------" + "\n");
-            System.out.println("xid:" + arr[i].getXid() + "\n");
-            System.out.println("operation:" + arr[i].getOperation() + "\n");
-            if (arr[i].getSqlRedo() != null) {
-                System.out.println("sqlRedo:" + new String(arr[i].getSqlRedo().getBytes("UTF8"), "UTF8") + "\n");
-            } else {
-                System.out.println("sqlRedo:" + "" + "\n");
-            }
-
-            System.out.println("########################" + i + "########################" + "\n");
-            System.out.println("scn:" + arr[i].getScn() + "\n");
-            System.out.println("startScn:" + arr[i].getStartScn() + "\n");
-            System.out.println("commitScn:" + arr[i].getCommitScn() + "\n");
-            System.out.println("timestamp:" + arr[i].getTimestamp() + "\n");
-            System.out.println("startTimestamp:" + arr[i].getStartTimestamp() + "\n");
-            System.out.println("commitTimestamp:" + arr[i].getCommitTimestamp() + "\n");
-            System.out.println("operationCode:" + arr[i].getOperationCode() + "\n");
-            System.out.println("rollBack:" + arr[i].getRollBack() + "\n");
-            System.out.println("segOwner:" + arr[i].getSegOwner() + "\n");
-            System.out.println("tableName:" + arr[i].getTableName() + "\n");
-
-            /*System.out.println("rowId:" + arr[i].getRowId() + "\n");
-            System.out.println("rbasqn:" + arr[i].getRbasqn() + "\n");
-            System.out.println("rbablk:" + arr[i].getRbablk() + "\n");
-            System.out.println("rbabyte:" + arr[i].getRbabyte() + "\n");
-            System.out.println("dataObj:" + arr[i].getDataObj() + "\n");
-            System.out.println("dataObjv:" + arr[i].getDataObjv() + "\n");
-            System.out.println("//dataObjd:" + arr[i].getDataObjd() + "\n");
-            System.out.println("rsId:" + arr[i].getRsId() + "\n");
-            System.out.println("ssn:" + arr[i].getSsn() + "\n");
-            System.out.println("csf:" + arr[i].getCsf() + "\n");
-            System.out.println("status:" + arr[i].getStatus() + "\n");*/
-            System.out.println("########################" + i + "########################" + "\n");
-        }
-        System.out.println("结果打印完毕");
-        ps.flush();
-        ps.close();
     }
 
 }
