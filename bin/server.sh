@@ -28,10 +28,10 @@ done
 classpath="${classpath:1}"
 
 # 构建完整的 Java 命令
-java_cmd="${java_home}/bin/java ${jvm_options} -cp ${classpath} com.dtxy.sync.dm2orcl.DirectoryMonitor"
+java_cmd="${java_home}/bin/java ${jvm_options} -cp ${classpath} com.dtxy.sync.dm2orcl.SyncServer"
 
 # 定义应用程序名称
-app_name="DirectoryMonitor"
+app_name="SyncServer"
 
 # 定义日志文件路径
 log_file="${base_dir}/logs/application.log"

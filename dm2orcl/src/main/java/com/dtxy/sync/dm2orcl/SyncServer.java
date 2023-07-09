@@ -10,7 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 
-public class DirectoryMonitor {
+public class SyncServer {
 
     private static Logger logger = null;
 
@@ -22,7 +22,7 @@ public class DirectoryMonitor {
             // 设置 Logback 配置文件的位置
             System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, ConfigUtil.getFilePath("log.config.path"));
 
-            logger = LoggerFactory.getLogger(DirectoryMonitor.class);
+            logger = LoggerFactory.getLogger(SyncServer.class);
             // 初始化日志记录器
             logger.info("logmnr started！");
 
