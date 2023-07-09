@@ -116,7 +116,7 @@ public class Dbmslob {
 
         } catch (Exception e) {
             e.printStackTrace();
-            logger.error("解析配置出错了：{}", e.getMessage());
+            logger.error("出错了：{}", e.getMessage());
         } finally {
             try {
                 PositionRecorder.savePositionToFile();
