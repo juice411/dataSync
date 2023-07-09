@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class SyncServer {
 
@@ -35,8 +37,12 @@ public class SyncServer {
             Path directory = Paths.get(DIRECTORY_PATH);
             directory.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY); // 监控文件修改事件
 
+            //首先执行一次离线解析
+            Dbmslob.parseMinerLog(getLastestFile(DIRECTORY_PATH));
+
             //记录最后一次修改事件的时间戳
             long lastModifiedTime = 0;
+
             // 启动监控循环
             logger.info("Monitoring directory:{} ", DIRECTORY_PATH);
             while (true) {
@@ -84,6 +90,23 @@ public class SyncServer {
             e.printStackTrace();
             logger.error("出错了：{}", e.getMessage());
         }
+    }
+
+    private static String getLastestFile(String DIRECTORY_PATH) {
+        String latestFile=null;
+        File directory = new File(DIRECTORY_PATH);
+        File[] files = directory.listFiles();
+
+        if (files != null && files.length > 0) {
+            Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
+            File latestModifiedFile = files[0];
+
+            latestFile = latestModifiedFile.getAbsolutePath();
+            logger.info("最新修改的文件：{}" , latestFile);
+        } else {
+            logger.info("{}中没有文件",DIRECTORY_PATH);
+        }
+        return latestFile;
     }
 
     private static void readFileContents(File file) {
