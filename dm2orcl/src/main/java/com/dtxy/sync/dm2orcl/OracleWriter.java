@@ -67,9 +67,9 @@ public class OracleWriter {
                 JsonObject condition_json = new Gson().fromJson(condition, JsonObject.class);
                 boolean isSync=true;
                 // 循环遍历
-                for (String key : condition_json.keySet()) {
-                    String condition_value=condition_json.get(key).getAsString();
-                    if(!values.get(key.toUpperCase()).getAsString().equals(condition_value)){
+                for (String dm_field : condition_json.keySet()) {
+                    String condition_value=condition_json.get(dm_field).getAsString();
+                    if(!values.get(dm_field.toUpperCase()).getAsString().equals(condition_value)){
                         isSync=false;
                         break;
                     }
