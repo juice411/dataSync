@@ -1,5 +1,6 @@
 package com.dtxy.sync.dm2orcl;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import oracle.jdbc.pool.OracleDataSource;
 import org.slf4j.Logger;
@@ -58,6 +59,31 @@ public class OracleWriter {
             String oracle_tab = base_info.get("oracle_tab").getAsString().trim();
             //获取达梦与Oracle映射表
             Map<String, String> FIELD_MAPPING = FieldMapping.getFieldMapping(base_info.get("dm_field").getAsString(), base_info.get("oracle_field").getAsString());
+
+            //先判断是否有按状态同步的需求
+            if(base_info.has("condition")){
+                //进一步判断是否满足同步的条件
+                String condition=base_info.get("condition").getAsString();
+                JsonObject condition_json = new Gson().fromJson(condition, JsonObject.class);
+                boolean isSync=true;
+                // 循环遍历
+                for (String key : condition_json.keySet()) {
+                    String condition_value=condition_json.get(key).getAsString();
+                    if(!values.get(key.toUpperCase()).getAsString().equals(condition_value)){
+                        isSync=false;
+                        break;
+                    }
+                }
+
+                if(!isSync){
+                    logger.info("不满足同步状态：{}",condition_json);
+                    return;
+                }else{
+                    //需要做同步,被认为肯定是update，但此时目标表应该没有数据，所以变为insert
+                    opr="insert";
+                }
+
+            }
 
             // 拼接操作语句
             String sql = null;
