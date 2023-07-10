@@ -37,7 +37,7 @@ public class Dbmslob {
             String sql_addLogFile = String.format("DBMS_LOGMNR.ADD_LOGFILE('%s');", archPath);
             //String sql_startLogmnr="DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTTIME=>TO_DATE('2023-07-07 11:20:00','YYYY-MM-DD HH24:MI:SS') , ENDTIME=>TO_DATE('2023-07-07 11:25:00','YYYY-MM-DD HH24:MI:SS'));";
             String sql_startLogmnr = String.format("DBMS_LOGMNR.START_LOGMNR(OPTIONS=>2128 , STARTSCN=>%d);", PositionRecorder.getLastProcessedPosition() + 1);
-            String sql_endLogmnr = "dbms_logmnr.end_logmnr()";
+
             statement.addBatch(sql_addLogFile);
             statement.addBatch(sql_startLogmnr);
 
@@ -109,11 +109,6 @@ public class Dbmslob {
                 PositionRecorder.recordPosition(scn);
             }
 
-            //关闭日志分析
-            statement = connection.createStatement();
-            statement.addBatch(sql_endLogmnr);
-            statement.executeBatch();
-
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("出错了：{}", e.getMessage());
@@ -145,6 +140,10 @@ public class Dbmslob {
             }
             if (statement != null) {
                 try {
+                    //关闭日志分析
+                    statement = connection.createStatement();
+                    statement.addBatch("dbms_logmnr.end_logmnr()");
+                    statement.executeBatch();
                     statement.close();
                 } catch (SQLException e) {
                     // 处理连接关闭异常
