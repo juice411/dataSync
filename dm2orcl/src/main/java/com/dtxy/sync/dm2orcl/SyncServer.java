@@ -30,6 +30,9 @@ public class SyncServer {
 
             ConfigUtil.init();
 
+            //TODO 本地调试，使用时打开，用完记得关闭
+            //Dbmslob.parseMinerLog();
+
             // 创建 WatchService 对象
             WatchService watchService = FileSystems.getDefault().newWatchService();
 

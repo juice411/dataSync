@@ -186,10 +186,11 @@ public class OracleWriter {
         StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(oracle_tab).append(" SET ");
         boolean isFirst = true;
         for (String dm_field : FIELD_MAPPING.keySet()) {
+            dm_field=dm_field.toUpperCase();
             //判断达梦字段是否包含了#号
             if (dm_field.contains("#")) {
                 String[] tmp = dm_field.split("#");
-                if (set.has(tmp[0].toUpperCase())) {
+                if (set.has(tmp[0])) {
                     String oracle_field = FIELD_MAPPING.get(dm_field);
                     if (oracle_field.contains("=")) {//是否存在函数表达式
                         if (!isFirst) {
@@ -249,13 +250,14 @@ public class OracleWriter {
         // 设置字段值并执行插入
         int index = 1;
         for (String dm_field : FIELD_MAPPING.keySet()) {
+            dm_field=dm_field.toUpperCase();
             String value;
             //判断达梦字段是否包含了#号
             if (dm_field.contains("#")) {
                 String[] tmp = dm_field.split("#", 2);
-                value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
+                value = jsonData.get(tmp[0]).getAsString().trim();
             } else {
-                value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
+                value = jsonData.get(dm_field).getAsString().trim();
             }
 
             if (value.equals("NULL")) {
@@ -296,12 +298,13 @@ public class OracleWriter {
         // 设置字段值并执行插入
         int index = 1;
         for (String dm_field : FIELD_MAPPING.keySet()) {
+            dm_field=dm_field.toUpperCase();
             String value;
             //判断达梦字段是否包含了#号
             if (dm_field.contains("#")) {
                 String[] tmp = dm_field.split("#", 2);
-                if (set.has(tmp[0].toUpperCase())) {
-                    value = jsonData.get(tmp[0].toUpperCase()).getAsString().trim();
+                if (set.has(tmp[0])) {
+                    value = jsonData.get(tmp[0]).getAsString().trim();
                     if (value.equals("NULL")) {
                         value = null;
                     } else if (value.contains("TIMESTAMP")) {
@@ -331,8 +334,8 @@ public class OracleWriter {
                         sql = sql.replaceFirst("\\?", "'" + value + "'");
                 }
             } else {
-                if (set.has(dm_field.toUpperCase())) {
-                    value = jsonData.get(dm_field.toUpperCase()).getAsString().trim();
+                if (set.has(dm_field)) {
+                    value = jsonData.get(dm_field).getAsString().trim();
                     if (value.equals("NULL")) {
                         value = null;
                     } else if (value.contains("TIMESTAMP")) {
