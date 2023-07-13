@@ -95,6 +95,10 @@ public class OracleWriter {
             } else if (opr.equalsIgnoreCase("update")) {
                 //获取set json obj
                 sql = buildUpdateSql(FIELD_MAPPING, oracle_tab, jsonData.getAsJsonObject("set"));
+                if(sql==null){
+                    logger.info("本次update没有涉及配置字段：{}",jsonData.getAsJsonObject("set"));
+                    return;
+                }
                 sql = sql.replaceAll("\\byour_condition\\b", "ID='" + values.get("ID").getAsString() + "'");
 
             } else if (opr.equalsIgnoreCase("delete")) {
@@ -208,6 +212,7 @@ public class OracleWriter {
     private static String buildUpdateSql(Map<String, String> FIELD_MAPPING, String oracle_tab, JsonObject set) throws Exception {
         StringBuilder sqlBuilder = new StringBuilder("UPDATE ").append(oracle_tab).append(" SET ");
         boolean isFirst = true;
+        int setLen=0;
         for (String dm_field : FIELD_MAPPING.keySet()) {
             dm_field=dm_field.toUpperCase();
             //判断达梦字段是否包含了#号
@@ -229,6 +234,7 @@ public class OracleWriter {
                         sqlBuilder.append(oracle_field).append(" = ?");
                         isFirst = false;
                     }
+                    setLen++;
                 }
 
             } else {
@@ -248,6 +254,7 @@ public class OracleWriter {
                         sqlBuilder.append(oracle_field).append(" = ?");
                         isFirst = false;
                     }
+                    setLen++;
                 }
 
             }
@@ -257,6 +264,9 @@ public class OracleWriter {
         // 添加 WHERE 子句
         sqlBuilder.append(" WHERE your_condition");
 
+        if(setLen==0){
+            return null;
+        }
         return sqlBuilder.toString();
     }
 
