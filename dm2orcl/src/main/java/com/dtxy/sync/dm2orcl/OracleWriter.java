@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,6 +43,8 @@ public class OracleWriter {
     }
 
     public static void sync2Oracle(JsonObject jsonData) throws Exception {
+        Connection connection = null;
+        PreparedStatement statement = null;
 
         try {
             /*Gson gson = new Gson();
@@ -102,8 +105,8 @@ public class OracleWriter {
 
             //logger.debug("同步Oracle的sql：{}", sql);
 
-            Connection connection = dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(sql);
+            connection = dataSource.getConnection();
+            statement = connection.prepareStatement(sql);
 
             // 设置字段值并执行同步
             if (opr.equalsIgnoreCase("insert")) {
@@ -145,6 +148,26 @@ public class OracleWriter {
             logger.error("数据同步 Oracle 失败：{}", e.getMessage());
         } catch (Exception e) {
             throw e;
+        }finally {
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("释放Oracle连接出错了：{}", e.getMessage());
+                }
+            }
+
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    // 处理连接关闭异常
+                    e.printStackTrace();
+                    logger.error("释放Oracle连接出错了：{}", e.getMessage());
+                }
+            }
         }
     }
 
