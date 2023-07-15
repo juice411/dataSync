@@ -49,7 +49,7 @@ public class SqlRedoToJsonConverter {
 
         for (int i = 0; i < columns.length; i++) {
             String key = columns[i].replaceAll("\"", "").trim();
-            String value = values[i].replaceAll("'", ""); // Remove surrounding single quotes
+            String value = values[i].replaceAll("'", "").trim(); // Remove surrounding single quotes
             // 给内部双引号加上转义符
             value = StringEscapeUtils.escapeJava(value);
 
