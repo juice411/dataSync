@@ -34,9 +34,9 @@ public class ConfigUtil {
         dataSource.setPassword(getProperty("dm.pwd"));
 
 // 配置连接池属性
-        dataSource.setInitialSize(1); // 初始连接数
-        dataSource.setMaxTotal(1); // 最大活动连接数
-        dataSource.setMinIdle(1); // 最小空闲连接数
+        dataSource.setInitialSize(2); // 初始连接数
+        dataSource.setMaxTotal(2); // 最大活动连接数
+        dataSource.setMinIdle(0); // 最小空闲连接数
         dataSource.setMaxIdle(1); // 最大空闲连接数
         dataSource.setMaxWaitMillis(5000); // 获取连接的最大等待时间（毫秒）
 
