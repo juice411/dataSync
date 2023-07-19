@@ -45,7 +45,7 @@ public class Dbmslob {
             statement.close();
 
             // 查询数据
-            String selectSql = String.format("select scn,sql_redo,OPERATION_CODE,COMMIT_TIMESTAMP,SEG_OWNER,TABLE_NAME,ssn,csf from v$logmnr_contents where scn >=%d and seg_owner in (%s) and table_name in (%s) and operation_code in (1,2,3) order by scn", PositionRecorder.getLastProcessedPosition() + 1, ConfigUtil.getProperty("monitor.segOwner"), moniterTable);
+            String selectSql = String.format("select scn,sql_redo,OPERATION_CODE,COMMIT_TIMESTAMP,SEG_OWNER,TABLE_NAME,ssn,csf from v$logmnr_contents where scn >=%d and commit_scn is not null and seg_owner in (%s) and table_name in (%s) and operation_code in (1,2,3) order by scn", PositionRecorder.getLastProcessedPosition() + 1, ConfigUtil.getProperty("monitor.segOwner"), moniterTable);
             selectStatement = connection.prepareStatement(selectSql);
             resultSet = selectStatement.executeQuery();
 
@@ -167,7 +167,7 @@ public class Dbmslob {
     public static void parseMinerLog() {
         //方便调试,用完记得注释
         int opr_code=3;
-        String sql_redo="UPDATE \"RL_FUEL_RLDD\".\"RL_DYGL_JHDXQK_DETAIL\" SET \"ORGNAME\" = '你的的测试' WHERE \"ID\" = '53d52cf2-c135-4e5c-9749-eb1bb3efffff' AND \"ORGID\" = '1301' AND \"ORGNAME\" IS NULL AND \"ORGLAYER\" = '0001001900010002' AND \"DW\" = '发耳电厂' AND \"YF\" = '2014-04' AND \"FILEID\" = '31d54933-900c-4cd8-9371-fcd98e3d3a19' AND \"HTBH\" = 'CDT-HT-DTGZ-FEGS-14-0156' AND \"GYS\" = '六盘水鸿盛矿山机电设备有限公司' AND \"YSFS\" = '汽运' AND \"SJDHL\" = 2536.01 AND \"SJLMFRL\" = 4263.92 AND \"SJLMHFF\" = 12.85 AND \"SJLMLF\" = 3.53 AND \"SJLMKJ\" = 469.89 AND \"SJLMYF\" = 0 AND \"SJLMQTF\" = 0 AND \"SJLMDCJ\" = 469.89 AND \"SJLMHSBD\" = 771.4 AND \"SJLMBHSBD\" = 659.32 AND \"JSDBH\" IS NULL AND \"MZLX\" IS NULL AND \"MZ\" IS NULL AND \"MZSYS\" = '掺配煤种' AND \"REMARK\" IS NULL AND \"ISAGREE\" = '同意' AND \"DJFS\" IS NULL AND \"FZGS\" IS NULL AND \"FJ\" IS NULL AND \"DJ\" IS NULL AND \"FZ\" IS NULL AND \"DZ\" IS NULL AND \"FHDW\" IS NULL AND \"SHDW\" IS NULL AND \"VARIETY\" IS NULL AND \"HY\" IS NULL AND \"JHDXQKID\" = '004e77ca-e3f4-4895-ab30-4165620fffff' AND \"GYSID\" IS NULL AND \"FZID\" IS NULL AND \"DZID\" IS NULL AND \"FJID\" IS NULL AND \"DJID\" IS NULL AND \"FHDWID\" IS NULL AND \"SHDWID\" IS NULL AND \"VARIETYID\" IS NULL AND \"YSFSID\" IS NULL AND \"DWID\" IS NULL AND \"MZID\" IS NULL AND \"CREATEUSER\" = '袁七一' AND \"CREATETIME\" = DATE'2015-09-23' AND \"UPDATEUSER\" IS NULL AND \"UPDATETIME\" IS NULL";
+        String sql_redo="UPDATE \"RL_FUEL_RLDD\".\"RL_JH_YDXQMX\" SET \"FENQI_ID\" = '这是同步测试' WHERE \"ID\" = '04be9f23-5169-4b5e-a38f-fe17ec1988c7' AND \"YDXQ_ID\" = '831b6feb-8bd1-4fe0-acbf-4b601e31aa50' AND \"FENQI_ID\" IS NULL AND \"FDL\" = 16000 AND \"FDBMH\" = 296 AND \"FDBML\" = 47360 AND \"GDL\" = 15152 AND \"GDBMH\" = 315 AND \"GDBML\" = 47728.8 AND \"GRL\" = 105000 AND \"GRBMH\" = 45 AND \"GRBML\" = 4725 AND \"CCSH\" = 55 AND \"QTY\" = 0 AND \"MZ\" = '02' AND \"REZHI\" = 4450 AND \"HFF\" = 38 AND \"LIUFEN\" = 1 AND \"XQSL\" = 90000 AND \"YCKC\" = 0 AND \"YMKC\" = 0 AND \"HTSX\" = '？' AND \"CGQY\" = '？' AND \"RNO\" = '1632359607776' AND \"CLBDC\" IS NULL AND \"YDZHSWDJ\" IS NULL AND \"CREATOR_ID\" IS NULL AND \"CREATOR_DATE\" = TIMESTAMP'2023-03-25 00:00:00' AND \"MODIFY_DATE\" = TIMESTAMP'2023-03-25 00:00:00' AND \"MODIFY_ID\" IS NULL AND \"CREATOR_NAME\" IS NULL AND \"MODIFY_NAME\" IS NULL AND \"IS_DEL\" = '0'";
 
         // 处理查询结果
         JsonObject jsonObject = null;
