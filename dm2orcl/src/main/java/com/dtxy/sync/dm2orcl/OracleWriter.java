@@ -61,10 +61,8 @@ public class OracleWriter {
             String oracle_tab = base_info.get("oracle_tab").getAsString().trim();
             //获取达梦与Oracle映射表
             Map<String, String> FIELD_MAPPING = FieldMapping.getFieldMapping(base_info.get("dm_field").getAsString(), base_info.get("oracle_field").getAsString());
-
             //先判断是否有按状态同步的需求
             if(base_info.has("condition")){
-                List<Integer> rowsAffecteds=new ArrayList<Integer>();
                 Connection dm_connection = null;
                 //Statement dm_statement = connection.createStatement();
                 PreparedStatement selectStatement = null;
@@ -77,62 +75,79 @@ public class OracleWriter {
                     boolean isMaster=condition_json.get("master").getAsBoolean();
 
                     if(isMaster){
-                        String dm_field=condition_json.get("field").getAsString().trim().toUpperCase();
-                        String []tmp=condition_json.get("field_value").getAsString().trim().split("#",2);
-                        if(tmp[0].equalsIgnoreCase(values.get(dm_field).getAsString())){//确认状态
-                            //首先对主表处理
-                            String selectSql=buildSelectSql(dm_tab,base_info.get("dm_field").getAsString().split(","),"ID",values.get("ID").getAsString());
+                        if(opr.equalsIgnoreCase("update")){
+                            String dm_field=condition_json.get("field").getAsString().trim().toUpperCase();
+                            String []tmp=condition_json.get("field_value").getAsString().trim().split("#",2);
+                            JsonObject json_set=jsonData.getAsJsonObject("set");
+                            if(tmp[0].equalsIgnoreCase(values.get(dm_field).getAsString())){//确认状态
+                                //首先对主表处理
+                                String selectSql=buildSelectSql(dm_tab,base_info.get("dm_field").getAsString().split(","),"ID",values.get("ID").getAsString());
 
-                            dm_connection = ConfigUtil.getDMDs().getConnection();
-                            selectStatement = dm_connection.prepareStatement(selectSql);
-                            resultSet = selectStatement.executeQuery();
-                            // 将查询结果转换为JSON对象
-                            JsonObject values_from_resultset=null;
-                            if (resultSet.next()) {
-                                values_from_resultset = new JsonObject();
-                                ResultSetMetaData meta = resultSet.getMetaData();
-                                int columnCount = meta.getColumnCount();
-                                for (int i = 1; i <= columnCount; i++) {
-                                    String fieldName = meta.getColumnName(i);
-                                    String fieldValue = resultSet.getString(i);
-                                    if (fieldValue == null) {
-                                        fieldValue = "NULL";
+                                dm_connection = ConfigUtil.getDMDs().getConnection();
+                                selectStatement = dm_connection.prepareStatement(selectSql);
+                                resultSet = selectStatement.executeQuery();
+                                // 将查询结果转换为JSON对象
+                                JsonObject values_from_resultset=null;
+                                if (resultSet.next()) {
+                                    values_from_resultset = new JsonObject();
+                                    ResultSetMetaData meta = resultSet.getMetaData();
+                                    int columnCount = meta.getColumnCount();
+                                    for (int i = 1; i <= columnCount; i++) {
+                                        String fieldName = meta.getColumnName(i);
+                                        String fieldValue = resultSet.getString(i);
+                                        if (fieldValue == null) {
+                                            fieldValue = "NULL";
+                                        }
+                                        values_from_resultset.addProperty(fieldName.toUpperCase(), fieldValue);
                                     }
-                                    values_from_resultset.addProperty(fieldName.toUpperCase(), fieldValue);
+                                }else {
+                                    logger.info("没有找到主表数据：{}",condition_json);
+                                    return;
                                 }
+
+                                connection = dataSource.getConnection();
+                                connection.setAutoCommit(false);
+                                // 拼接操作语句
+                                String sql_insert = buildInsertSql(FIELD_MAPPING, oracle_tab);
+                                statement = connection.prepareStatement(sql_insert);
+                                // 设置字段值并执行同步
+                                setParameterValues(statement, values, FIELD_MAPPING, sql_insert);
+                                try {
+                                    statement.executeUpdate();
+                                    // 处理 children
+                                    handleChildren(condition_json,values.get("ID").getAsString(),dm_connection,selectStatement,resultSet,connection);
+
+                                    connection.commit();
+                                    logger.info("{}", "数据同步 Oracle 成功！");
+                                    return;
+
+                                }catch (SQLException e){
+                                    connection.rollback();
+                                    logger.error("{}", "事务提交 Oracle 失败！");
+                                    throw e;
+                                }
+                                /*for (int rowsAffected : rowsAffecteds){
+                                    if(rowsAffected!=1){
+                                        connection.rollback();
+                                        logger.error("{}", "事务提交 Oracle 失败！");
+                                        return;
+                                    }
+                                }*/
+
+
+                            }else if(tmp[1].equalsIgnoreCase(values.get(dm_field).getAsString())){//退回状态
+                                //TODO 该干嘛干嘛
+
+
                             }else {
-                                logger.info("没有找到主表数据：{}",condition_json);
+                                logger.info("不满足同步状态：{}",condition_json);
                                 return;
                             }
 
-                            connection = dataSource.getConnection();
-                            connection.setAutoCommit(false);
-                            // 拼接操作语句
-                            String sql = buildInsertSql(FIELD_MAPPING, oracle_tab);
-                            statement = connection.prepareStatement(sql);
-                            // 设置字段值并执行同步
-                            setParameterValues(statement, values, FIELD_MAPPING, sql);
-                            rowsAffecteds.add(statement.executeUpdate());
-                            // 处理 children
-                            handleChildren(condition_json,values.get("ID").getAsString(),dm_connection,selectStatement,resultSet,connection,rowsAffecteds);
-
-                            for (int rowsAffected : rowsAffecteds){
-                                if(rowsAffected!=1){
-                                    connection.rollback();
-                                    return;
-                                }
-                            }
-                            connection.commit();
-                            logger.info("{}", "数据同步 Oracle 成功！");
+                        }else if(opr.equalsIgnoreCase("insert")){
                             return;
-
-                        }else if(tmp[1].equalsIgnoreCase(values.get(dm_field).getAsString())){//退回状态
+                        }else if(opr.equalsIgnoreCase("delete")){
                             //TODO 该干嘛干嘛
-
-
-                        }else {
-                            logger.info("不满足同步状态：{}",condition_json);
-                            return;
                         }
 
                     }else {
@@ -198,7 +213,6 @@ public class OracleWriter {
                 }
 
             }
-
             // 拼接操作语句
             String sql = null;
             if (opr.equalsIgnoreCase("insert")) {
@@ -285,7 +299,7 @@ public class OracleWriter {
         }
     }
 
-    private static void handleChildren(JsonObject jsonObj, String parent_ID, Connection dm_connection, PreparedStatement selectStatement, ResultSet resultSet, Connection connection, List rowsAffecteds) throws Exception {
+    private static void handleChildren(JsonObject jsonObj, String parent_ID, Connection dm_connection, PreparedStatement selectStatement, ResultSet resultSet, Connection connection) throws Exception {
         if (jsonObj.has("children")) {
             JsonArray children = jsonObj.getAsJsonArray("children");
             for (JsonElement child : children) {
@@ -328,10 +342,10 @@ public class OracleWriter {
                 try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                     // 执行 PreparedStatement 对象的操作
                     setParameterValues(stmt, values_from_resultset, FIELD_MAPPING, sql);
-                    rowsAffecteds.add(stmt.executeUpdate());
+                    stmt.executeUpdate();
                 }
 
-                handleChildren(childObj,values_from_resultset.get("ID").getAsString(),dm_connection,selectStatement,resultSet, connection, rowsAffecteds);
+                handleChildren(childObj,values_from_resultset.get("ID").getAsString(),dm_connection,selectStatement,resultSet, connection);
             }
         }
     }
