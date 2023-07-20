@@ -151,13 +151,13 @@ public class OracleWriter {
                         }
 
                     }else {
-                        String master_tab=condition_json.get("master_tab").getAsString().trim().toUpperCase();
+                        /*String master_tab=condition_json.get("master_tab").getAsString().trim().toUpperCase();
                         String field=condition_json.get("master_field").getAsString().trim().toUpperCase();
                         String relation_field=condition_json.get("relation_field").getAsString().trim().toUpperCase();
                         String relation_value=values.get(relation_field).getAsString();
 
                         String []tmp=condition_json.get("master_value").getAsString().trim().split("#",2);
-                        //查询获取该表的审核信息
+                        //查询获取该主表的审核信息
                         dm_connection = ConfigUtil.getDMDs().getConnection();
                         String selectSql = String.format("select %s from %s where id ='%s'", field, master_tab, relation_value);
                         selectStatement = dm_connection.prepareStatement(selectSql);
@@ -172,6 +172,13 @@ public class OracleWriter {
 
                         }else {
                             logger.info("没有找到关联的主表数据：{}",condition_json);
+                            return;
+                        }*/
+
+                        //递归获取顶级主表审核状态
+                        dm_connection = ConfigUtil.getDMDs().getConnection();
+                        String isSync[]=getMasterStatus(condition_json,values.get("ID").getAsString(),dm_connection,resultSet);
+                        if(isSync[1].equals("0")){
                             return;
                         }
 
@@ -297,6 +304,59 @@ public class OracleWriter {
                 }
             }
         }
+    }
+
+    private static String []getMasterStatus(JsonObject jsonObject,String child_ID,Connection dm_connection, ResultSet resultSet) throws SQLException {
+        String tmp[]={"-1","1"};
+        if (jsonObject.has("children")) {
+            JsonArray childrenArray = jsonObject.get("children").getAsJsonArray();
+            for (JsonElement child : childrenArray) {
+                tmp=getMasterStatus(child.getAsJsonObject(),child_ID,dm_connection,resultSet);
+            }
+        }
+
+        // 输出当前节点信息或执行其他操作
+        if (jsonObject.has("tab_name")&&jsonObject.has("relation_field")) {
+            String tabName = jsonObject.get("tab_name").getAsString();
+            String relationField = jsonObject.get("relation_field").getAsString();
+            String selectSql = String.format("select %s from %s where id ='%s'", relationField, tabName, child_ID);
+
+            try (PreparedStatement stmt = dm_connection.prepareStatement(selectSql)) {
+                // 执行 PreparedStatement 对象的操作
+                resultSet = stmt.executeQuery();
+
+                if (resultSet.next()) {
+                    tmp[0] = resultSet.getString(relationField);
+
+                }else {
+                    logger.info("没有找到关联的主表数据：{}",jsonObject);
+                    tmp[1]="0";
+                }
+            }
+        }else if (jsonObject.has("master")) {
+            String tabName = jsonObject.get("tab_name").getAsString().trim().toUpperCase();
+            String field = jsonObject.get("field").getAsString().trim().toUpperCase();
+            String []tmp2 = jsonObject.get("field_value").getAsString().trim().split("#",2);
+            String selectSql = String.format("select %s from %s where id ='%s'", field, tabName, tmp[0]);
+
+            try (PreparedStatement stmt = dm_connection.prepareStatement(selectSql)) {
+                // 执行 PreparedStatement 对象的操作
+                resultSet = stmt.executeQuery();
+                if (resultSet.next()) {
+                    String status = resultSet.getString(field);
+                    if(!status.equalsIgnoreCase(tmp2[0])&&!status.equalsIgnoreCase(tmp2[1])){
+                        logger.info("不满足同步状态：{}",jsonObject);
+                        tmp[1]="0";
+                    }
+
+                }else {
+                    logger.info("没有找到关联的主表数据：{}",jsonObject);
+                    tmp[1]="0";
+                }
+            }
+        }
+
+        return tmp;
     }
 
     private static void handleChildren(JsonObject jsonObj, String parent_ID, Connection dm_connection, PreparedStatement selectStatement, ResultSet resultSet, Connection connection) throws Exception {
