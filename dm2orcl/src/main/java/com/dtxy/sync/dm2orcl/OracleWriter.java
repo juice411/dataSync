@@ -320,7 +320,7 @@ public class OracleWriter {
                 resultSet = selectStatement.executeQuery();
                 // 将查询结果转换为JSON对象
                 JsonObject values_from_resultset=null;
-                if (resultSet.next()) {
+                while (resultSet.next()) {
                     values_from_resultset = new JsonObject();
                     ResultSetMetaData meta = resultSet.getMetaData();
                     int columnCount = meta.getColumnCount();
@@ -332,17 +332,15 @@ public class OracleWriter {
                         }
                         values_from_resultset.addProperty(fieldName.toUpperCase(), fieldValue);
                     }
-                }else {
-                    logger.info("没有找到子表数据：{}");
-                    return;
-                }
-                // 拼接操作语句
-                String sql = buildInsertSql(FIELD_MAPPING, oracle_tab);
 
-                try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                    // 执行 PreparedStatement 对象的操作
-                    setParameterValues(stmt, values_from_resultset, FIELD_MAPPING, sql);
-                    stmt.executeUpdate();
+                    // 拼接操作语句
+                    String sql = buildInsertSql(FIELD_MAPPING, oracle_tab);
+
+                    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                        // 执行 PreparedStatement 对象的操作
+                        setParameterValues(stmt, values_from_resultset, FIELD_MAPPING, sql);
+                        stmt.executeUpdate();
+                    }
                 }
 
                 handleChildren(childObj,values_from_resultset.get("ID").getAsString(),dm_connection,selectStatement,resultSet, connection);
