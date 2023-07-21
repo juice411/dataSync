@@ -78,8 +78,15 @@ public class OracleWriter {
                         if(opr.equalsIgnoreCase("update")){
                             String dm_field=condition_json.get("field").getAsString().trim().toUpperCase();
                             String []tmp=condition_json.get("field_value").getAsString().trim().split("#",2);
-                            JsonObject json_set=jsonData.getAsJsonObject("set");
                             if(tmp[0].equalsIgnoreCase(values.get(dm_field).getAsString())){//确认状态
+                                //是否有逻辑删除
+                                if(condition_json.has("del_field")&&condition_json.has("del_value")){
+                                    String del_value=condition_json.get("del_value").getAsString().trim();
+                                    if(values.get(condition_json.get("del_field").getAsString().trim().toUpperCase()).getAsString().trim().equalsIgnoreCase(del_value)){
+
+                                        throw new Exception("set opr as delete");
+                                    }
+                                }
                                 //首先对主表处理
                                 String selectSql=buildSelectSql(dm_tab,base_info.get("dm_field").getAsString().split(","),"ID",values.get("ID").getAsString());
 
@@ -126,14 +133,6 @@ public class OracleWriter {
                                     logger.error("{}", "事务提交 Oracle 失败！");
                                     throw e;
                                 }
-                                /*for (int rowsAffected : rowsAffecteds){
-                                    if(rowsAffected!=1){
-                                        connection.rollback();
-                                        logger.error("{}", "事务提交 Oracle 失败！");
-                                        return;
-                                    }
-                                }*/
-
 
                             }else if(tmp[1].equalsIgnoreCase(values.get(dm_field).getAsString())){//退回状态
                                 //TODO 该干嘛干嘛
@@ -151,29 +150,6 @@ public class OracleWriter {
                         }
 
                     }else {
-                        /*String master_tab=condition_json.get("master_tab").getAsString().trim().toUpperCase();
-                        String field=condition_json.get("master_field").getAsString().trim().toUpperCase();
-                        String relation_field=condition_json.get("relation_field").getAsString().trim().toUpperCase();
-                        String relation_value=values.get(relation_field).getAsString();
-
-                        String []tmp=condition_json.get("master_value").getAsString().trim().split("#",2);
-                        //查询获取该主表的审核信息
-                        dm_connection = ConfigUtil.getDMDs().getConnection();
-                        String selectSql = String.format("select %s from %s where id ='%s'", field, master_tab, relation_value);
-                        selectStatement = dm_connection.prepareStatement(selectSql);
-                        resultSet = selectStatement.executeQuery();
-
-                        if (resultSet.next()) {
-                            String status = resultSet.getString(field);
-                            if(!status.equalsIgnoreCase(tmp[0])&&!status.equalsIgnoreCase(tmp[1])){
-                                logger.info("不满足同步状态：{}",condition_json);
-                                return;
-                            }
-
-                        }else {
-                            logger.info("没有找到关联的主表数据：{}",condition_json);
-                            return;
-                        }*/
 
                         //递归获取顶级主表审核状态
                         dm_connection = ConfigUtil.getDMDs().getConnection();
@@ -181,12 +157,24 @@ public class OracleWriter {
                         if(isSync[1].equals("0")){
                             return;
                         }
+                        //是否有逻辑删除
+                        if(condition_json.has("del_field")&&condition_json.has("del_value")){
+                            String del_value=condition_json.get("del_value").getAsString().trim();
+                            if(values.get(condition_json.get("del_field").getAsString().trim().toUpperCase()).getAsString().trim().equalsIgnoreCase(del_value)){
+
+                                throw new Exception("set opr as delete");
+                            }
+                        }
 
                     }
                 }catch (Exception e){
                     if(e.getMessage().contains("ORA-00001: 违反唯一约束条件")){
                         //TODO 该干嘛干嘛
                         logger.info("{}","在次提交审核通过状态，只做更新");
+                    }else if(e.getMessage().contains("set opr as delete")){
+                        //TODO 该干嘛干嘛
+                        opr="delete";
+                        logger.info("{}","执行逻辑删除转物理删除");
                     }else
                         throw e;
                 }finally {
