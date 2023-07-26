@@ -1,14 +1,13 @@
 package com.dtxy.sync.dm2orcl;
 
 import com.google.gson.*;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import oracle.jdbc.pool.OracleDataSource;
-import org.apache.xmlbeans.XmlSimpleList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +16,7 @@ public class OracleWriter {
     private static final Logger logger = LoggerFactory.getLogger(OracleWriter.class);
     private static final String pattern = "TIMESTAMP(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})|DATE(\\d{4}-\\d{2}-\\d{2})";
 
-    private static final OracleDataSource dataSource;
+    private static final HikariDataSource dataSource;
 
     static {
         // 创建连接池并获取连接
@@ -125,12 +124,12 @@ public class OracleWriter {
                                     handleChildren(condition_json,values.get("ID").getAsString(),dm_connection,selectStatement,resultSet,connection);
 
                                     connection.commit();
-                                    logger.info("{}", "数据同步 Oracle 成功！");
+                                    logger.info("{}，scn:{}", "事务提交 Oracle 成功！",jsonData.get("scn").getAsLong());
                                     return;
 
-                                }catch (SQLException e){
+                                }catch (Exception e){
                                     connection.rollback();
-                                    logger.error("{}", "事务提交 Oracle 失败！");
+                                    logger.error("{}，scn:{}", "事务提交 Oracle 失败！",jsonData.get("scn").getAsLong());
                                     throw e;
                                 }
 
@@ -144,6 +143,7 @@ public class OracleWriter {
                             }
 
                         }else if(opr.equalsIgnoreCase("insert")){
+                            logger.info("不满足同步状态：{}",condition_json);
                             return;
                         }else if(opr.equalsIgnoreCase("delete")){
                             //TODO 该干嘛干嘛
@@ -151,18 +151,22 @@ public class OracleWriter {
 
                     }else {
 
-                        //递归获取顶级主表审核状态
-                        dm_connection = ConfigUtil.getDMDs().getConnection();
-                        String isSync[]=getMasterStatus(condition_json,values.get("ID").getAsString(),dm_connection,resultSet);
-                        if(isSync[1].equals("0")){
-                            return;
-                        }
-                        //是否有逻辑删除
-                        if(condition_json.has("del_field")&&condition_json.has("del_value")){
-                            String del_value=condition_json.get("del_value").getAsString().trim();
-                            if(values.get(condition_json.get("del_field").getAsString().trim().toUpperCase()).getAsString().trim().equalsIgnoreCase(del_value)){
+                        if(opr.equalsIgnoreCase("delete")){
+                            //TODO 该干嘛干嘛
+                        }else {
+                            //递归获取顶级主表审核状态
+                            dm_connection = ConfigUtil.getDMDs().getConnection();
+                            String isSync[]=getMasterStatus(condition_json,values.get("ID").getAsString(),dm_connection,resultSet);
+                            if(isSync[1].equals("0")){
+                                return;
+                            }
+                            //是否有逻辑删除
+                            if(condition_json.has("del_field")&&condition_json.has("del_value")){
+                                String del_value=condition_json.get("del_value").getAsString().trim();
+                                if(values.get(condition_json.get("del_field").getAsString().trim().toUpperCase()).getAsString().trim().equalsIgnoreCase(del_value)){
 
-                                throw new Exception("set opr as delete");
+                                    throw new Exception("set opr as delete");
+                                }
                             }
                         }
 
@@ -264,9 +268,9 @@ public class OracleWriter {
                 cstmt.execute();
                 cstmt.close();
             }*/
-            logger.info("{}", "数据同步 Oracle 成功！");
+            logger.info("{}，scn:{}", "数据同步 Oracle 成功！",jsonData.get("scn").getAsLong());
         } catch (SQLException e) {
-            logger.error("数据同步 Oracle 失败：{}", e.getMessage());
+            logger.error("数据同步 Oracle 失败：{}，scn:{}", e.getMessage(),jsonData.get("scn").getAsLong());
         } catch (Exception e) {
             throw e;
         }finally {
@@ -653,20 +657,46 @@ public class OracleWriter {
     }
 
     // 创建 Oracle 连接池
-    private static OracleDataSource createDataSource() {
-        try {
-            Class.forName("oracle.jdbc.driver.OracleDriver");
+    private static HikariDataSource createDataSource() {
+
+            /*Class.forName("oracle.jdbc.driver.OracleDriver");
             OracleDataSource dataSource = new OracleDataSource();
             dataSource.setURL(ConfigUtil.getProperty("oracle.url"));
             dataSource.setUser(ConfigUtil.getProperty("oracle.user"));
-            dataSource.setPassword(ConfigUtil.getProperty("oracle.pwd"));
-            return dataSource;
-        } catch (SQLException | ClassNotFoundException e) {
+            dataSource.setPassword(ConfigUtil.getProperty("oracle.pwd"));*/
+        HikariConfig config = new HikariConfig();
 
-            logger.error("创建 Oracle 连接池失败：{}", e.getMessage());
+        config.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+        config.setJdbcUrl(ConfigUtil.getProperty("oracle.url"));
+        config.setUsername(ConfigUtil.getProperty("oracle.user"));
+        config.setPassword(ConfigUtil.getProperty("oracle.pwd"));
+        // 最小空闲连接数，默认值：10
+        config.setMinimumIdle(2);
+        // 最大连接数，默认值：10
+        config.setMaximumPoolSize(10);
+        // 连接超时时间（获取连接的最大等待时间），默认值：30秒
+        //config.setConnectionTimeout(30000);
+        // 空闲连接超时时间，默认值：10分钟
+        config.setIdleTimeout(600000);
+        // 最大生命周期时间（连接在连接池中最长的生命周期时间），默认值：30分钟
+        config.setMaxLifetime(1800000);
+        // 自动提交，默认值：true
+        config.setAutoCommit(true);
+        // 测试连接SQL语句（用于检测连接是否有效的SQL语句），默认值：无
+        // 默认情况下，如果未设置，则会使用“SELECT 1”作为测试语句
+        config.setConnectionTestQuery("SELECT 1 FROM DUAL");
+        // 等待队列大小（连接池中等待获取连接的请求队列的最大大小），默认值：-1（无限制）
+        //config.setQueueSize(-1);
+        // 连接初始化SQL语句（连接池创建连接时可以执行的SQL语句），默认值：无
+        //config.setInitializationFailFast(false);
+        // 连接池的名称，默认值：自动生成的唯一名称
+        config.setPoolName("HikariPool-1");
 
-            return null;
-        }
+        // 其他可选配置...
+        // config.addDataSourceProperty("property_name", "property_value");
+
+        HikariDataSource dataSource = new HikariDataSource(config);
+        return dataSource;
     }
 
     private static void registerShutdownHook() {
@@ -675,7 +705,7 @@ public class OracleWriter {
             if (dataSource != null) {
                 try {
                     dataSource.close();
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     logger.error("关闭 Oracle 连接池失败：{}", e.getMessage());
 
                 }
