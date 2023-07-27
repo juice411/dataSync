@@ -74,14 +74,14 @@ public class Dbmslob {
                     }
 
                 } else if (ssn == 1 && csf == 1) {//说明sql仍然未结束
-                    sqlBuilder.append(" ").append(sql_redo);
+                    sqlBuilder.append(sql_redo);
                     continue;
                 } else if (ssn == 1 && csf == 0) {//说明sql已结束
                     if (sqlBuilder.length() == 0) {//说明后边的部分先到了，需要等前边的过来
-                        sqlBuilder.append(" ").append(sql_redo);
+                        sqlBuilder.append(sql_redo);
                         continue;
                     } else {
-                        sqlBuilder.append(" ").append(sql_redo);
+                        sqlBuilder.append(sql_redo);
                         sql_redo = sqlBuilder.toString();
                         // 清空内容
                         sqlBuilder.setLength(0);
