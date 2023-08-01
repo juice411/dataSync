@@ -3,7 +3,6 @@ package com.dtxy.sync.dm2orcl;
 import com.google.gson.*;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import oracle.jdbc.pool.OracleDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
