@@ -103,8 +103,9 @@ public class Dbmslob {
                 }
 
                 logger.debug("原始信息：scn：{}，commit_time:{}，sql:{}", scn, commitTime, sql_redo);
-                //放入队列，带上scn
+                //放入队列，带上scn,commit_time
                 jsonObject.addProperty("scn",scn);
+                jsonObject.addProperty("commit_time",ConfigUtil.getCommitTime(commitTime));
                 ConfigUtil.getDataQueue().put(jsonObject);
 
             }

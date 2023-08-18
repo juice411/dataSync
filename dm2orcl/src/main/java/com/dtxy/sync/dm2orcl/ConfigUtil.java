@@ -10,16 +10,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ConfigUtil {
+    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
     private static Properties properties;
     private static DataSource dataSource;
 
     private static ArrayBlockingQueue<JsonObject> dataQueue;
+
+    private static ArrayBlockingQueue<String> fileQueue;
 
     private static ExecutorService consumerThreadPool;
 
@@ -28,6 +34,8 @@ public class ConfigUtil {
         dataSource = createDataSource();
 
         dataQueue = new ArrayBlockingQueue<>(Integer.parseInt(getProperty("queue.capacity")));
+
+        fileQueue = new ArrayBlockingQueue<>(50);
 
         consumerThreadPool = Executors.newCachedThreadPool();
 
@@ -74,6 +82,10 @@ public class ConfigUtil {
         return dataQueue;
     }
 
+    public static ArrayBlockingQueue<String> getFileQueue() {
+        return fileQueue;
+    }
+
     public static ExecutorService getConsumerThreadPool() {
         return consumerThreadPool;
     }
@@ -88,6 +100,16 @@ public class ConfigUtil {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static long getCommitTime(String commit_time){
+        Date date = null;
+        try {
+            date = sdf.parse(commit_time);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        return date.getTime();
     }
 
     public static void loadConfigFile(String relativePath) throws IOException {
