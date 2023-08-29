@@ -658,11 +658,6 @@ public class OracleWriter {
     // 创建 Oracle 连接池
     private static HikariDataSource createDataSource() {
 
-            /*Class.forName("oracle.jdbc.driver.OracleDriver");
-            OracleDataSource dataSource = new OracleDataSource();
-            dataSource.setURL(ConfigUtil.getProperty("oracle.url"));
-            dataSource.setUser(ConfigUtil.getProperty("oracle.user"));
-            dataSource.setPassword(ConfigUtil.getProperty("oracle.pwd"));*/
         HikariConfig config = new HikariConfig();
 
         config.setDriverClassName("oracle.jdbc.driver.OracleDriver");
@@ -670,9 +665,9 @@ public class OracleWriter {
         config.setUsername(ConfigUtil.getProperty("oracle.user"));
         config.setPassword(ConfigUtil.getProperty("oracle.pwd"));
         // 最小空闲连接数，默认值：10
-        config.setMinimumIdle(2);
+        config.setMinimumIdle(Integer.parseInt(ConfigUtil.getProperty("oracle.pool.mini")));
         // 最大连接数，默认值：10
-        config.setMaximumPoolSize(10);
+        config.setMaximumPoolSize(Integer.parseInt(ConfigUtil.getProperty("oracle.pool.maxi")));
         // 连接超时时间（获取连接的最大等待时间），默认值：30秒
         //config.setConnectionTimeout(30000);
         // 空闲连接超时时间，默认值：10分钟
