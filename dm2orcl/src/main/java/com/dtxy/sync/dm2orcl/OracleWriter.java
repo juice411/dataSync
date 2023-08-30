@@ -298,11 +298,11 @@ public class OracleWriter {
     }
 
     private static String []getMasterStatus(JsonObject jsonObject,String child_ID,Connection dm_connection, ResultSet resultSet) throws SQLException {
-        String tmp[]={"-1","1"};
+        String tmp[]={child_ID,"1"};
         if (jsonObject.has("children")) {
             JsonArray childrenArray = jsonObject.get("children").getAsJsonArray();
             for (JsonElement child : childrenArray) {
-                tmp=getMasterStatus(child.getAsJsonObject(),child_ID,dm_connection,resultSet);
+                tmp=getMasterStatus(child.getAsJsonObject(),tmp[0],dm_connection,resultSet);
             }
         }
 
@@ -310,7 +310,7 @@ public class OracleWriter {
         if (jsonObject.has("tab_name")&&jsonObject.has("relation_field")) {
             String tabName = jsonObject.get("tab_name").getAsString();
             String relationField = jsonObject.get("relation_field").getAsString();
-            String selectSql = String.format("select %s from %s where id ='%s'", relationField, tabName, child_ID);
+            String selectSql = String.format("select %s from %s where id ='%s'", relationField, tabName, tmp[0]);
 
             try (PreparedStatement stmt = dm_connection.prepareStatement(selectSql)) {
                 // 执行 PreparedStatement 对象的操作
