@@ -384,8 +384,15 @@ public class OracleWriter {
                         values_from_resultset.addProperty(fieldName.toUpperCase(), fieldValue);
                     }
 
-                    // 拼接操作语句
-                    String sql = buildInsertSql(FIELD_MAPPING, oracle_tab);
+                    //为避免子表提前插入数据引发冲突导致事务失败，需先删一遍(垃圾设计不知道为什么更新主表审核状态时候，有重复插入子表的操作情况发生)
+                    String sql = buildDeleteSql(FIELD_MAPPING, oracle_tab);
+                    sql = sql.replaceAll("\\byour_condition\\b", "ID='" + values_from_resultset.get("ID").getAsString() + "'");
+                    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                        stmt.executeUpdate();
+                    }
+
+                    // 拼接插入语句
+                    sql = buildInsertSql(FIELD_MAPPING, oracle_tab);
 
                     try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                         // 执行 PreparedStatement 对象的操作
