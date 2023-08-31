@@ -392,9 +392,10 @@ public class OracleWriter {
                         setParameterValues(stmt, values_from_resultset, FIELD_MAPPING, sql);
                         stmt.executeUpdate();
                     }
+
+                    handleChildren(childObj,values_from_resultset.get("ID").getAsString(),dm_connection,selectStatement,resultSet, connection);
                 }
 
-                handleChildren(childObj,values_from_resultset.get("ID").getAsString(),dm_connection,selectStatement,resultSet, connection);
             }
         }
     }
