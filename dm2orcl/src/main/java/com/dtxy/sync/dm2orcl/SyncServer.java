@@ -31,9 +31,6 @@ public class SyncServer {
 
             ConfigUtil.init();
 
-            //TODO 本地调试，使用时打开，用完记得关闭
-            //Dbmslob.parseMinerLog();
-
             //处理文件主线程
             new Thread(new Runnable(){
                 @Override
